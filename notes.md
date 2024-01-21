@@ -1,5 +1,8 @@
 ## This is my notes markdown file!
 
+### TODO: impletment ToString method in Chess Moves Class in order to see chess notation instead of random addresses like this:
+- (chess.ChessMove@6200f9cb)
+
 - whenever creating an object except for strings and arrays, you must use new
 - Date dt; declaration
 - dt = new Date(); intialization
