@@ -76,6 +76,10 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return new HashSet<>();
+        if (board.getPiece(myPosition).type == PieceType.BISHOP){
+            BishopMovesCalculator bishopCalculator = new BishopMovesCalculator();
+            return bishopCalculator.pieceMoves(board, myPosition);
+        }
+        else{return new HashSet<>();}
     }
 }
