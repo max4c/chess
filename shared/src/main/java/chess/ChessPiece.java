@@ -88,6 +88,10 @@ public class ChessPiece {
             QueenMovesCalculator queenCalculator = new QueenMovesCalculator();
             return queenCalculator.pieceMoves(board, myPosition);
         }
+        if (board.getPiece(myPosition).type == PieceType.KING){
+            KingMovesCalculator kingCalculator = new KingMovesCalculator();
+            return kingCalculator.pieceMoves(board, myPosition);
+        }
         else{return new HashSet<>();}
     }
 }
