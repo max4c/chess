@@ -83,4 +83,8 @@ public class ChessBoard {
                 "squares=" + Arrays.deepToString(squares) +
                 '}';
     }
+
+    public ChessPiece[][] getSquares() {
+        return squares;
+    }
 }
