@@ -92,6 +92,13 @@ public class ChessPiece {
             KingMovesCalculator kingCalculator = new KingMovesCalculator();
             return kingCalculator.pieceMoves(board, myPosition);
         }
-        else{return new HashSet<>();}
+        if (board.getPiece(myPosition).type == PieceType.KNIGHT){
+            KnightMovesCalculator knightCalculator = new KnightMovesCalculator();
+            return knightCalculator.pieceMoves(board, myPosition);
+        }
+        else{
+            PawnMovesCalculator pawnCalculator = new PawnMovesCalculator();
+            return pawnCalculator.pieceMoves(board, myPosition);
+        }
     }
 }
