@@ -47,10 +47,19 @@ public class ChessGame {
      *
      * @param startPosition the piece to get valid moves for
      * @return Set of valid moves for requested piece, or null if no piece at
-     * startPosition
+     * startPosition.
+     * A move is invalid if the chess piece cannot move there,
+     * if the move leaves the team’s king in danger,
+     * or if it’s not the corresponding team's turn.
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        return null;
+        ChessPiece piece = board.getPiece(startPosition);
+
+        Collection<ChessMove> validMoveSet = piece.pieceMoves(board,startPosition);
+
+
+
+        return validMoveSet;
     }
 
     /**
@@ -58,13 +67,17 @@ public class ChessGame {
      *
      * @param move chess move to preform
      * @throws InvalidMoveException if move is invalid
-     * A move is invalid if the chess piece cannot move there,
-     * if the move leaves the team’s king in danger,
-     * or if it’s not the corresponding team's turn.
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        board.addPiece(move.getEndPosition(),board.getSquares()[move.getStartPosition().getRow()-1][move.getStartPosition().getColumn()-1]);
-        board.getSquares()[move.getStartPosition().getRow()-1][move.getStartPosition().getColumn()-1] = null;
+
+        ChessPosition startPosition = move.getStartPosition();
+        ChessPosition endPosition = move.getEndPosition();
+
+        if(!validMoves(startPosition).contains(move)){
+            throw new InvalidMoveException();
+        }
+        board.addPiece(endPosition,board.getSquares()[startPosition.getRow()-1][startPosition.getColumn()-1]);
+        board.getSquares()[startPosition.getRow()-1][startPosition.getColumn()-1] = null;
     }
 
     /**
