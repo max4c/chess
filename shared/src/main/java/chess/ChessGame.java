@@ -1,6 +1,8 @@
 package chess;
 
 import java.util.Collection;
+import java.util.Arrays;
+import java.util.HashSet;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -53,11 +55,43 @@ public class ChessGame {
      * or if it’s not the corresponding team's turn.
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        ChessPiece piece = board.getPiece(startPosition);
+        /* check if king in check, if true,
+        using the position of the piece that is causing check,
+        see if any pieces on king's team can remove the piece causing check (but that could cause another check),
+        if no pieces can remove check(all validMoves on king's team are null), checkmate
 
+        create a board for each move in validMoveSet in the moveSet
+        with that board see if team is in check, if true
+        remove that move in validMoveSet
+        */
+
+        ChessPiece piece = board.getPiece(startPosition);
+        TeamColor color = piece.getTeamColor();
         Collection<ChessMove> validMoveSet = piece.pieceMoves(board,startPosition);
 
+        Collection<ChessMove> tempMoveSet = new HashSet<>(validMoveSet);
 
+        for(ChessMove move: tempMoveSet){
+
+            ChessPiece[][] tempSquares = new ChessPiece[8][8];
+
+            for(int i = 0; i < board.getSquares().length; i++){
+                tempSquares[i] = Arrays.copyOf(board.getSquares()[i], board.getSquares()[i].length);
+            }
+
+            ChessBoard tempBoard = new ChessBoard(tempSquares);
+
+            tempBoard.addPiece(move.getEndPosition(),tempBoard.getSquares()[move.getStartPosition().getRow()-1][move.getStartPosition().getColumn()-1]);
+            tempBoard.getSquares()[startPosition.getRow()-1][startPosition.getColumn()-1] = null; // remove initial piece position
+
+            ChessBoard ogBoard = board;
+            board = tempBoard;
+
+            if(isInCheck(color)){
+                validMoveSet.remove(move);
+            }
+            board = ogBoard;
+        }
 
         return validMoveSet;
     }
@@ -87,7 +121,26 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // find king
+        for(int i = 0; i <8; i++){
+            for(int j = 0; j<8;j++){
+                ChessPiece potentialPiece = board.getSquares()[i][j];
+                if(potentialPiece != null){  // find a piece on the chess board
+                    Collection<ChessMove> pieceMoveSet = potentialPiece.pieceMoves(board,new ChessPosition(i+1,j+1)); // generate potential moves of piece
+                        if(teamColor != potentialPiece.getTeamColor()) { // make sure the two pieces aren't same color
+                            for(ChessMove move : pieceMoveSet){ // check for each move if the piece puts the King in Check
+                                if(board.getSquares()[move.getEndPosition().getRow()-1][move.getEndPosition().getColumn()-1] != null){
+                                    if(board.getSquares()[move.getEndPosition().getRow()-1][move.getEndPosition().getColumn()-1].getPieceType() == ChessPiece.PieceType.KING && teamColor != potentialPiece.getTeamColor()){
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        return false;
     }
 
     /**
