@@ -7,72 +7,81 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         HashSet<ChessMove> moveSet = new HashSet<>();
-        int curRow = myPosition.getRow();
-        int curCol = myPosition.getColumn();
-        ChessGame.TeamColor color = board.getPiece(myPosition).getTeamColor();
 
-        if(color == ChessGame.TeamColor.WHITE){
-            if(board.getSquares()[curRow][curCol-1] == null) {
-                if (curRow == 7) {
-                    addPromotion(curRow + 1, curCol, myPosition, moveSet, board);
-                }
-                if (curRow == 2) {
-                    if(board.getSquares()[curRow+1][curCol-1] == null) {
-                        moveSet.add(new ChessMove(myPosition, new ChessPosition(curRow + 2, curCol), null));
-                    }
-                }
-                if (curRow != 7) {
-                    moveSet.add(new ChessMove(myPosition, new ChessPosition(curRow + 1, curCol), null));
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        if(board.getPiece(myPosition).getTeamColor() == ChessGame.TeamColor.WHITE){
+            if(row == 2){
+                if((board.getPiece(new ChessPosition(row+2,col)) == null)&& (board.getPiece(new ChessPosition(row+1,col)) == null)) {
+                    moveSet.add(new ChessMove(myPosition, new ChessPosition(row + 2, col), null));
                 }
             }
-            addDiagonalPromotion(curRow + 1, curCol - 1, myPosition, moveSet, board,color);
-            addDiagonalPromotion(curRow + 1, curCol + 1, myPosition, moveSet, board,color);
-        }
-        if(color == ChessGame.TeamColor.BLACK) {
-            if(board.getSquares()[curRow-2][curCol-1] == null) {
-                if (curRow == 2) {
-                    addPromotion(curRow - 1, curCol, myPosition, moveSet, board);
-                }
-                if (curRow == 7) {
-                    if(board.getSquares()[curRow-3][curCol-1] == null) {
-                        moveSet.add(new ChessMove(myPosition, new ChessPosition(curRow - 2, curCol), null));
-                    }
-                }
-                if (curRow != 2) {
-                    moveSet.add(new ChessMove(myPosition, new ChessPosition(curRow - 1, curCol), null));
+            if(row == 7){
+                moveSet.addAll(PromotionPieces(board,myPosition,row+1,col));
+            }
+            if(row!= 7) {
+                if(board.getPiece(new ChessPosition(row+1,col)) == null) {
+                    moveSet.add(new ChessMove(myPosition, new ChessPosition(row + 1, col), null));
                 }
             }
-            addDiagonalPromotion(curRow - 1, curCol - 1, myPosition, moveSet, board,color);
-            addDiagonalPromotion(curRow - 1, curCol + 1, myPosition, moveSet, board,color);
+            moveSet.addAll(Diagonal(board,myPosition,row+1,col-1));
+            moveSet.addAll(Diagonal(board,myPosition,row+1,col+1));
         }
+        else{
+            if(row == 7){
+                if((board.getPiece(new ChessPosition(row-2,col)) == null)&& (board.getPiece(new ChessPosition(row-1,col)) == null)) {
+                    moveSet.add(new ChessMove(myPosition, new ChessPosition(row - 2, col), null));
+                }
+            }
+            if(row == 2){
+                moveSet.addAll(PromotionPieces(board,myPosition,row-1,col));
+            }
+            if(row!=2) {
+                if(board.getPiece(new ChessPosition(row-1,col)) == null){
+                    moveSet.add(new ChessMove(myPosition, new ChessPosition(row - 1, col), null));
+                }
+            }
+            moveSet.addAll(Diagonal(board,myPosition,row-1,col-1));
+            moveSet.addAll(Diagonal(board,myPosition,row-1,col+1));
+        }
+
         return moveSet;
     }
 
-    public void addPromotion(int curRow, int curCol, ChessPosition myPosition, HashSet<ChessMove> moveSet, ChessBoard board){
+    public Collection<ChessMove> PromotionPieces(ChessBoard board, ChessPosition myPosition, int row, int col){
+        HashSet<ChessMove> moveSet = new HashSet<>();
+        if(board.getPiece(new ChessPosition(row,col)) == null) {
+            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.ROOK));
+            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.QUEEN));
+            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.BISHOP));
+            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.KNIGHT));
+        }
 
-        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.ROOK));
-        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.QUEEN));
-        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.KNIGHT));
-        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.BISHOP));
-
+        return moveSet;
     }
 
-    public void addDiagonalPromotion(int curRow, int curCol, ChessPosition myPosition, HashSet<ChessMove> moveSet, ChessBoard board,ChessGame.TeamColor color){
+    public Collection<ChessMove> Diagonal(ChessBoard board, ChessPosition myPosition, int row, int col){
+        HashSet<ChessMove> moveSet = new HashSet<>();
+        ChessPosition newPosition = new ChessPosition(row,col);
+        ChessGame.TeamColor color = board.getPiece(myPosition).getTeamColor();
 
-        if(curCol > 0 && curCol < 9){ // out of range check
-            if(board.getSquares()[curRow-1][curCol-1] != null){ // null check
-                if (board.getPiece(myPosition).getTeamColor() != board.getSquares()[curRow-1][curCol-1].getTeamColor()) { //type check
-                    if((curRow == 8 && color == ChessGame.TeamColor.WHITE)|| (curRow == 1 && color == ChessGame.TeamColor.BLACK)){
-                        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.ROOK));
-                        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.QUEEN));
-                        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.KNIGHT));
-                        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), ChessPiece.PieceType.BISHOP));
+        if((row > 0 && row < 8)&&(col > 0 && col < 8)){
+            if(board.getPiece(newPosition) != null){
+                if(board.getPiece(myPosition).getTeamColor() != board.getPiece(newPosition).getTeamColor()){
+                    if((color == ChessGame.TeamColor.WHITE && row ==6)|| ((color == ChessGame.TeamColor.BLACK && row ==1))){
+                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.ROOK));
+                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.QUEEN));
+                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.BISHOP));
+                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.KNIGHT));
                     }
                     else{
-                        moveSet.add(new ChessMove(myPosition,new ChessPosition(curRow,curCol), null));
+                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), null));
                     }
                 }
             }
         }
+
+        return moveSet;
     }
 }
