@@ -66,7 +66,7 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
         ChessPosition newPosition = new ChessPosition(row,col);
         ChessGame.TeamColor color = board.getPiece(myPosition).getTeamColor();
 
-        if((row > 0 && row < 8)&&(col > 0 && col < 8)){
+        if((row > 0 && row < 9)&&(col > 0 && col < 9)){
             if(board.getPiece(newPosition) != null){
                 if(board.getPiece(myPosition).getTeamColor() != board.getPiece(newPosition).getTeamColor()){
                     if((color == ChessGame.TeamColor.WHITE && row ==6)|| ((color == ChessGame.TeamColor.BLACK && row ==1))){
