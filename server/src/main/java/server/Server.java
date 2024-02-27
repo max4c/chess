@@ -39,6 +39,7 @@ public class Server {
         // Register your endpoints and handle exceptions here.
         Spark.post("/user",this::register);
         Spark.post("/session", this::login);
+        Spark.delete("/session",this::logout);
         Spark.delete("/db", this::clearApp);
 
 
@@ -49,6 +50,19 @@ public class Server {
     public void stop() {
         Spark.stop();
         Spark.awaitStop();
+    }
+
+    private Object logout(Request req, Response res) {
+        String authToken =  req.headers("authorization");
+        try {
+            userService.logout(authToken);
+            res.status(200);
+            return "{}";
+        }
+        catch(HttpException e){
+            res.status(e.getStatusCode());
+            return new Gson().toJson(Map.of("message", e.getMessage()));
+        }
     }
 
     private Object login(Request req, Response res) {
@@ -89,10 +103,4 @@ GameServices
 - join game
 - list games
 - create game
-UserServices
-- logout
-- login
-- registration
-ClearService
-- clear
  */
