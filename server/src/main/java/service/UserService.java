@@ -57,4 +57,26 @@ public class UserService {
             throw new HttpException("Error: description", 500);
         }
     }
+
+    public void logout(String authToken) throws HttpException{
+        AuthData auth = null;
+
+        try{
+           auth = authAccess.getAuthData(authToken);
+        } catch (Exception e){
+            throw new HttpException("Error: server error", 500);
+        }
+
+        if(auth == null){
+            throw new HttpException("Error: unauthorized",401);
+        }
+
+        try {
+            authAccess.deleteAuth(authToken);
+        } catch (Exception e) {
+            throw new HttpException("Error: description", 500);
+        }
+
+
+    }
 }
