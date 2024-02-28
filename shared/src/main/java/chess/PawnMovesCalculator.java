@@ -49,15 +49,18 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
         return moveSet;
     }
 
+    public void addPromotionPieces(HashSet<ChessMove> moveSet, ChessPosition myPosition, int row, int col){
+        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.ROOK));
+        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.QUEEN));
+        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.BISHOP));
+        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.KNIGHT));
+    }
+
     public Collection<ChessMove> promotionPieces(ChessBoard board, ChessPosition myPosition, int row, int col){
         HashSet<ChessMove> moveSet = new HashSet<>();
         if(board.getPiece(new ChessPosition(row,col)) == null) {
-            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.ROOK));
-            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.QUEEN));
-            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.BISHOP));
-            moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.KNIGHT));
+            addPromotionPieces(moveSet, myPosition, row, col);
         }
-
         return moveSet;
     }
 
@@ -70,10 +73,7 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
             if(board.getPiece(newPosition) != null){
                 if(board.getPiece(myPosition).getTeamColor() != board.getPiece(newPosition).getTeamColor()){
                     if((color == ChessGame.TeamColor.WHITE && row ==6)|| ((color == ChessGame.TeamColor.BLACK && row ==1))){
-                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.ROOK));
-                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.QUEEN));
-                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.BISHOP));
-                        moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.KNIGHT));
+                        addPromotionPieces(moveSet, myPosition, row, col);
                     }
                     else{
                         moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), null));
@@ -84,4 +84,5 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
 
         return moveSet;
     }
+
 }
