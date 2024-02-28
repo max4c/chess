@@ -53,18 +53,6 @@ public class ChessMove {
                 '}';
     }
 
-    public void setStartPosition(ChessPosition startPosition) {
-        this.startPosition = startPosition;
-    }
-
-    public void setEndPosition(ChessPosition endPosition) {
-        this.endPosition = endPosition;
-    }
-
-    public void setPromotionPiece(ChessPiece.PieceType promotionPiece) {
-        this.promotionPiece = promotionPiece;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

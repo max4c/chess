@@ -53,28 +53,23 @@ public class ChessGame {
      * A move is invalid if the chess piece cannot move there,
      * if the move leaves the team’s king in danger,
      * or if it’s not the corresponding team's turn.
+     * check if king in check, if true,
+     *         using the position of the piece that is causing check,
+     *         see if any pieces on king's team can remove the piece causing check (but that could cause another check),
+     *         if no pieces can remove check(all validMoves on king's team are null), checkmate
+     *         create a board for each move in validMoveSet in the moveSet
+     *         with that board see if team is in check, if true
+     *         remove that move in validMoveSet
+     *         Idea to call isInCheck in isInCheckMate
+     *         - in validMoves function call isInCheckMate
+     *         - in isInCheckMate call isInCheck for the all the pieces
+     *         - if every isInCheck returns true, return true for isInCheckMate
+     *         the problem is that the for loop of moves is being called in validMoves, not in isInCheckMate
+     *         I could have a count in the validMoves function incrementing if isInCheckMate returns true
+     *          and if the count == the same length as the tempMoveSet
+     *         then that means every move returned
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        /* check if king in check, if true,
-        using the position of the piece that is causing check,
-        see if any pieces on king's team can remove the piece causing check (but that could cause another check),
-        if no pieces can remove check(all validMoves on king's team are null), checkmate
-
-        create a board for each move in validMoveSet in the moveSet
-        with that board see if team is in check, if true
-        remove that move in validMoveSet
-
-        Idea to call isInCheck in isInCheckMate
-        - in validMoves function call isInCheckMate
-        - in isInCheckMate call isInCheck for the all the pieces
-        - if every isInCheck returns true, return true for isInCheckMate
-
-        the problem is that the for loop of moves is being called in validMoves, not in isInCheckMate
-        I could have a count in the validMoves function incrementing if isInCheckMate returns true
-         and if the count == the same length as the tempMoveSet
-        then that means every move returned
-         */
-
         ChessPiece piece = board.getPiece(startPosition);
         ChessGame.TeamColor color = piece.getTeamColor();
         Collection<ChessMove> validMoveSet = piece.pieceMoves(board, startPosition);
@@ -178,15 +173,14 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-
         if(isInCheck(teamColor)) {
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
                     ChessPiece potentialPiece = board.getSquares()[i][j];
                     if (potentialPiece != null) {
                         if ((potentialPiece.getTeamColor() == teamColor)) {
-                            ChessPosition Position = new ChessPosition(i + 1, j + 1);
-                            if (!validMoves(Position).isEmpty()) {
+                            ChessPosition position = new ChessPosition(i + 1, j + 1);
+                            if (!validMoves(position).isEmpty()) {
                                 return false;
                             }
                         }
@@ -213,8 +207,8 @@ public class ChessGame {
                     ChessPiece potentialPiece = board.getSquares()[i][j];
                     if (potentialPiece != null) {
                         if ((potentialPiece.getTeamColor() == teamColor)) {
-                            ChessPosition Position = new ChessPosition(i + 1, j + 1);
-                            if (!validMoves(Position).isEmpty()) {
+                            ChessPosition position = new ChessPosition(i + 1, j + 1);
+                            if (!validMoves(position).isEmpty()) {
                                 return false;
                             }
                         }
@@ -224,8 +218,6 @@ public class ChessGame {
             return true;
         }
         return false;
-
-
     }
 
 
