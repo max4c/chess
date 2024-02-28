@@ -173,11 +173,7 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        if(isInCheck(teamColor)) {
-            return hasNoValidMoves(teamColor);
-        }
-        return false;
-
+        return  isInCheck(teamColor) && hasNoValidMoves(teamColor);
     }
 
     private boolean hasNoValidMoves(TeamColor teamColor){
@@ -205,10 +201,7 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        if(!isInCheck(teamColor)) {
-            return hasNoValidMoves(teamColor);
-        }
-        return false;
+        return !isInCheck(teamColor) && hasNoValidMoves(teamColor);
     }
 
 
