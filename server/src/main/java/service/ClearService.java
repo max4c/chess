@@ -21,7 +21,7 @@ public class ClearService {
             userAccess.deleteAllUsers();
             authAccess.deleteAllAuths();
         } catch (Exception e) {
-        throw new HttpException("Error: description", 500);
+            throw new HttpException("Error: description", 500);
         }
     }
 }
