@@ -1,6 +1,8 @@
 package server;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import dataAccess.DataAccessException;
 import dataAccess.GameDAO;
 import dataAccess.UserDAO;
@@ -9,10 +11,12 @@ import dataAccess.MemoryGameDAO;
 import dataAccess.MemoryUserDAO;
 import dataAccess.MemoryAuthDAO;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import service.*;
 import spark.*;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class Server {
@@ -22,6 +26,7 @@ public class Server {
     private final UserDAO userAccess;
     private final ClearService clearService;
     private final UserService userService;
+    private final GameService gameService;
 
     public Server(){
         this.gameAccess = new MemoryGameDAO();
@@ -29,6 +34,7 @@ public class Server {
         this.userAccess = new MemoryUserDAO();
         this.clearService = new ClearService(gameAccess, userAccess, authAccess);
         this.userService = new UserService(userAccess,authAccess);
+        this.gameService = new GameService(gameAccess,authAccess);
     }
 
     public int run(int desiredPort) {
@@ -40,6 +46,9 @@ public class Server {
         Spark.post("/user",this::register);
         Spark.post("/session", this::login);
         Spark.delete("/session",this::logout);
+        Spark.post("/game",this::createGame);
+        Spark.put("/game", this::joinGame);
+        Spark.get("/game", this::listGames);
         Spark.delete("/db", this::clearApp);
 
 
@@ -50,6 +59,52 @@ public class Server {
     public void stop() {
         Spark.stop();
         Spark.awaitStop();
+    }
+
+    private Object listGames(Request req, Response res){
+        String authToken =  req.headers("authorization");
+        try{
+            Collection<GameData> games = gameService.listGames(authToken);
+            res.status(200);
+            return new Gson().toJson(Map.of("games",games));
+        }
+        catch(HttpException e){
+            res.status(e.getStatusCode());
+            return new Gson().toJson(Map.of("message", e.getMessage()));
+        }
+    }
+
+    private Object joinGame(Request req, Response res){
+        String authToken =  req.headers("authorization");
+        String json = req.body();
+        JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
+        String playerColor = jsonObject.has("playerColor") ?
+                jsonObject.get("playerColor").getAsString() : null;
+        Integer gameID = jsonObject.has("gameID") ?
+                jsonObject.get("gameID").getAsInt() : null;
+        try{
+            gameService.joinGame(authToken, playerColor, gameID);
+            res.status(200);
+            return "{}";
+        }
+        catch(HttpException e){
+            res.status(e.getStatusCode());
+            return new Gson().toJson(Map.of("message", e.getMessage()));
+        }
+    }
+
+    private Object createGame(Request req, Response res){
+        String authToken =  req.headers("authorization");
+        GameData game = new Gson().fromJson(req.body(), GameData.class);
+        try{
+            int gameID = gameService.createGame(authToken,game.gameName());
+            res.status(200);
+            return new Gson().toJson(Map.of("gameID",gameID));
+        }
+        catch(HttpException e){
+            res.status(e.getStatusCode());
+            return new Gson().toJson(Map.of("message", e.getMessage()));
+        }
     }
 
     private Object logout(Request req, Response res) {
@@ -92,9 +147,15 @@ public class Server {
     }
 
     private Object clearApp(Request req, Response res) throws DataAccessException{
-        clearService.clear();
-        res.status(200);
-        return "{}";
+        try {
+            clearService.clear();
+            res.status(200);
+            return "{}";
+        }
+        catch(HttpException e){
+            res.status(e.getStatusCode());
+            return new Gson().toJson(Map.of("message", e.getMessage()));
+        }
     }
 }
 
@@ -102,5 +163,4 @@ public class Server {
 GameServices
 - join game
 - list games
-- create game
  */

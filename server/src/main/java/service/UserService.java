@@ -1,6 +1,4 @@
 package service;
-import dataAccess.DataAccessException;
-import dataAccess.GameDAO;
 import dataAccess.UserDAO;
 import dataAccess.AuthDAO;
 import model.AuthData;
@@ -42,7 +40,7 @@ public class UserService {
         try {
             user = userAccess.getUser(username);
         } catch (Exception e) {
-            throw new HttpException("Error: server error", 500);
+            throw new HttpException("Error: description", 500);
         }
 
         if(user == null || !Objects.equals(user.password(), password)){
@@ -64,7 +62,7 @@ public class UserService {
         try{
            auth = authAccess.getAuthData(authToken);
         } catch (Exception e){
-            throw new HttpException("Error: server error", 500);
+            throw new HttpException("Error: description", 500);
         }
 
         if(auth == null){

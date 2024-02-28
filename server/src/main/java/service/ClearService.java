@@ -15,9 +15,13 @@ public class ClearService {
         this.authAccess = authAccess;
     }
 
-    public void clear() {
-        gameAccess.deletaAllGames();
-        userAccess.deleteAllUsers();
-        authAccess.deleteAllAuths();
+    public void clear() throws HttpException{
+        try {
+            gameAccess.deleteAllGames();
+            userAccess.deleteAllUsers();
+            authAccess.deleteAllAuths();
+        } catch (Exception e) {
+        throw new HttpException("Error: description", 500);
+        }
     }
 }
