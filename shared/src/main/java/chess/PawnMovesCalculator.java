@@ -18,15 +18,15 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                 }
             }
             if(row == 7){
-                moveSet.addAll(PromotionPieces(board,myPosition,row+1,col));
+                moveSet.addAll(promotionPieces(board,myPosition,row+1,col));
             }
             if(row!= 7) {
                 if(board.getPiece(new ChessPosition(row+1,col)) == null) {
                     moveSet.add(new ChessMove(myPosition, new ChessPosition(row + 1, col), null));
                 }
             }
-            moveSet.addAll(Diagonal(board,myPosition,row+1,col-1));
-            moveSet.addAll(Diagonal(board,myPosition,row+1,col+1));
+            moveSet.addAll(diagonal(board,myPosition,row+1,col-1));
+            moveSet.addAll(diagonal(board,myPosition,row+1,col+1));
         }
         else{
             if(row == 7){
@@ -35,21 +35,21 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
                 }
             }
             if(row == 2){
-                moveSet.addAll(PromotionPieces(board,myPosition,row-1,col));
+                moveSet.addAll(promotionPieces(board,myPosition,row-1,col));
             }
             if(row!=2) {
                 if(board.getPiece(new ChessPosition(row-1,col)) == null){
                     moveSet.add(new ChessMove(myPosition, new ChessPosition(row - 1, col), null));
                 }
             }
-            moveSet.addAll(Diagonal(board,myPosition,row-1,col-1));
-            moveSet.addAll(Diagonal(board,myPosition,row-1,col+1));
+            moveSet.addAll(diagonal(board,myPosition,row-1,col-1));
+            moveSet.addAll(diagonal(board,myPosition,row-1,col+1));
         }
 
         return moveSet;
     }
 
-    public Collection<ChessMove> PromotionPieces(ChessBoard board, ChessPosition myPosition, int row, int col){
+    public Collection<ChessMove> promotionPieces(ChessBoard board, ChessPosition myPosition, int row, int col){
         HashSet<ChessMove> moveSet = new HashSet<>();
         if(board.getPiece(new ChessPosition(row,col)) == null) {
             moveSet.add(new ChessMove(myPosition, new ChessPosition(row, col), ChessPiece.PieceType.ROOK));
@@ -61,7 +61,7 @@ public class PawnMovesCalculator implements PieceMovesCalculator{
         return moveSet;
     }
 
-    public Collection<ChessMove> Diagonal(ChessBoard board, ChessPosition myPosition, int row, int col){
+    public Collection<ChessMove> diagonal(ChessBoard board, ChessPosition myPosition, int row, int col){
         HashSet<ChessMove> moveSet = new HashSet<>();
         ChessPosition newPosition = new ChessPosition(row,col);
         ChessGame.TeamColor color = board.getPiece(myPosition).getTeamColor();

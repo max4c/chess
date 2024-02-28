@@ -158,9 +158,3 @@ public class Server {
         }
     }
 }
-
-/*
-GameServices
-- join game
-- list games
- */
