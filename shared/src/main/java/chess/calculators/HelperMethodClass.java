@@ -1,9 +1,14 @@
-package chess;
+package chess.calculators;
+
+import chess.ChessBoard;
+import chess.ChessMove;
+import chess.ChessPosition;
+import chess.calculators.PieceMovesCalculator;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-public abstract class HelperMethodClass implements PieceMovesCalculator{
+public abstract class HelperMethodClass implements PieceMovesCalculator {
     protected Collection<ChessMove> lineMoves(int rowDirection, int colDirection, ChessPosition myPosition, ChessBoard board){
         HashSet<ChessMove> moveSet = new HashSet<>();
         int curRow = myPosition.getRow();

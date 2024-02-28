@@ -1,6 +1,7 @@
 package chess;
 
-import java.util.HashSet;
+import chess.calculators.*;
+
 import java.util.Collection;
 import java.util.Objects;
 
