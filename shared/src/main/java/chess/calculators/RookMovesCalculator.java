@@ -1,9 +1,13 @@
-package chess;
+package chess.calculators;
+
+import chess.ChessBoard;
+import chess.ChessMove;
+import chess.ChessPosition;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-public class RookMovesCalculator  extends HelperMethodClass{
+public class RookMovesCalculator  extends HelperMethodClass {
 
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
