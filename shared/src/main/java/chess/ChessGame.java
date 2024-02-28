@@ -174,23 +174,27 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         if(isInCheck(teamColor)) {
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    ChessPiece potentialPiece = board.getSquares()[i][j];
-                    if (potentialPiece != null) {
-                        if ((potentialPiece.getTeamColor() == teamColor)) {
-                            ChessPosition position = new ChessPosition(i + 1, j + 1);
-                            if (!validMoves(position).isEmpty()) {
-                                return false;
-                            }
+            return hasNoValidMoves(teamColor);
+        }
+        return false;
+
+    }
+
+    private boolean hasNoValidMoves(TeamColor teamColor){
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPiece potentialPiece = board.getSquares()[i][j];
+                if (potentialPiece != null) {
+                    if ((potentialPiece.getTeamColor() == teamColor)) {
+                        ChessPosition position = new ChessPosition(i + 1, j + 1);
+                        if (!validMoves(position).isEmpty()) {
+                            return false;
                         }
                     }
                 }
             }
-            return true;
         }
-        return false;
-
+        return true;
     }
 
     /**
@@ -202,20 +206,7 @@ public class ChessGame {
      */
     public boolean isInStalemate(TeamColor teamColor) {
         if(!isInCheck(teamColor)) {
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    ChessPiece potentialPiece = board.getSquares()[i][j];
-                    if (potentialPiece != null) {
-                        if ((potentialPiece.getTeamColor() == teamColor)) {
-                            ChessPosition position = new ChessPosition(i + 1, j + 1);
-                            if (!validMoves(position).isEmpty()) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
-            return true;
+            return hasNoValidMoves(teamColor);
         }
         return false;
     }
