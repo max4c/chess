@@ -20,11 +20,15 @@ public class UserService {
         if(username == null || password == null || email == null){
             throw new HttpException("Error: bad request",400);
         }
+        try {
+            if (userAccess.getUser(username) != null) {
+                throw new HttpException("Error: already taken", 403);
+            }
+        }catch(Exception e){
+            throw new HttpException("Error: already taken", 403);
+        }
 
         try {
-            if(userAccess.getUser(username) != null){
-                throw new HttpException("Error: already taken",403);
-            }
             userAccess.createUser(username, password, email);
             String authToken = authAccess.createAuth(username);
 
@@ -46,7 +50,7 @@ public class UserService {
 
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        if(user == null || encoder.matches(user.password(), password)){
+        if(user == null || !encoder.matches(password,user.password())){
             throw new HttpException("Error: unauthorized",401);
         }
 
