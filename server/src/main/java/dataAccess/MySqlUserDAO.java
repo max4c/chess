@@ -1,6 +1,8 @@
 package dataAccess;
 
+import com.google.gson.Gson;
 import dataAccess.Exception.DataAccessException;
+import model.AuthData;
 import model.UserData;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -31,13 +33,34 @@ public class MySqlUserDAO implements UserDAO{
     }
 
     @Override
-    public UserData getUser(String username) {
+    public UserData getUser(String username) throws DataAccessException{
+        var statement = "SELECT username, json FROM user WHERE username=?";
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(statement)) {
+                ps.setString(1, username);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new UserData(rs.getString("username"),rs.getString("password"),rs.getString("email"));
+                    }
+                }
+            }
+        }catch (Exception e){
+            throw new DataAccessException(500, String.format("unable to update database: %s, %s",statement, e.getMessage()));
+        }
         return null;
     }
 
     @Override
-    public void createUser(String username, String password, String email) {
-        var statement = "INSERT INTO user (name, type, json) VALUES (?, ?, ?)";
+    public void createUser(String username, String password, String email) throws DataAccessException {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hashedPassword = encoder.encode(password);
+        var statement = "INSERT INTO user (name, password, email) VALUES (?, ?, ?)";
+        try {
+            DatabaseManager.executeUpdate(statement, username, hashedPassword, email);
+        }catch (DataAccessException e){
+            throw new DataAccessException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+        }
+
     }
 
 

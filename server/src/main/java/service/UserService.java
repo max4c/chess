@@ -19,17 +19,17 @@ public class UserService {
         if(username == null || password == null || email == null){
             throw new HttpException("Error: bad request",400);
         }
-        if(userAccess.getUser(username) != null){
-            throw new HttpException("Error: already taken",403);
-        }
 
         try {
+            if(userAccess.getUser(username) != null){
+                throw new HttpException("Error: already taken",403);
+            }
             userAccess.createUser(username, password, email);
             String authToken = authAccess.createAuth(username);
 
             return authAccess.getAuthData(authToken);
         } catch (Exception e) {
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
     }
@@ -40,7 +40,7 @@ public class UserService {
         try {
             user = userAccess.getUser(username);
         } catch (Exception e) {
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
         if(user == null || !Objects.equals(user.password(), password)){
@@ -52,7 +52,7 @@ public class UserService {
 
             return authAccess.getAuthData(authToken);
         } catch (Exception e) {
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
     }
 
@@ -62,7 +62,7 @@ public class UserService {
         try{
            auth = authAccess.getAuthData(authToken);
         } catch (Exception e){
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
         if(auth == null){
@@ -72,7 +72,7 @@ public class UserService {
         try {
             authAccess.deleteAuth(authToken);
         } catch (Exception e) {
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
 

@@ -1,9 +1,12 @@
 package dataAccess;
 
+import com.google.gson.Gson;
 import dataAccess.Exception.DataAccessException;
 import model.AuthData;
 
+import javax.xml.crypto.Data;
 import java.sql.*;
+import java.util.UUID;
 
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
@@ -33,12 +36,32 @@ public class MySqlAuthDAO implements AuthDAO{
     }
 
     @Override
-    public String createAuth(String username) {
-        return null;
+    public String createAuth(String username) throws DataAccessException{
+        var statement = "INSERT INTO auth (username, authToken) VALUES (?, ?)";
+        String authToken =  UUID.randomUUID().toString();
+        try {
+            DatabaseManager.executeUpdate(statement, username, authToken);
+        }catch (DataAccessException e){
+            throw new DataAccessException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+        }
+        return authToken;
     }
 
     @Override
-    public AuthData getAuthData(String authToken) {
+    public AuthData getAuthData(String authToken) throws DataAccessException{
+        var statement = "SELECT authToken, json FROM auth WHERE authToken=?";
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(statement)) {
+                ps.setString(1, authToken);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new AuthData(rs.getString("authToken"),rs.getString("username"));
+                    }
+                }
+            }
+        }catch (Exception e){
+            throw new DataAccessException(500, String.format("unable to update database: %s, %s",statement, e.getMessage()));
+        }
         return null;
     }
 
@@ -47,29 +70,6 @@ public class MySqlAuthDAO implements AuthDAO{
         // delete from table with no where condition
     }
 
-    /*
-    private int executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (var conn = DatabaseManager.getConnection()) {
-            try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-                for (var i = 0; i < params.length; i++) {
-                    var param = params[i];
-                    if (param instanceof String p) ps.setString(i + 1, p);
-                    else if (param instanceof Integer p) ps.setInt(i + 1, p);
-                    else if (param instanceof AuthData p) ps.setString(i + 1, p.toString());
-                    else if (param == null) ps.setNull(i + 1, NULL);
-                }
-                ps.executeUpdate();
 
-                var rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-
-                return 0;
-            }
-        } catch (SQLException e) {
-            throw new DataAccessException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
-        }
-    } */
 
 }
