@@ -27,7 +27,7 @@ public class GameService {
         try{
             auth = authAccess.getAuthData(authToken);
         } catch (Exception e){
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
         if(auth == null){
@@ -37,7 +37,7 @@ public class GameService {
         try {
             return gameAccess.createGame(gameName);
         } catch (Exception e) {
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
     }
 
@@ -53,7 +53,7 @@ public class GameService {
             auth = authAccess.getAuthData(authToken);
             game = gameAccess.getGame(gameID);
         } catch (Exception e){
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
         if(auth == null){
@@ -82,7 +82,7 @@ public class GameService {
                     gameAccess.updateGame(gameID, "blackUsername", auth.username());
                 }
             }catch (Exception e) {
-                throw new HttpException("Error: description", 500);
+                throw new HttpException(e.getMessage(), 500);
             }
         }
     }
@@ -93,7 +93,7 @@ public class GameService {
         try{
             auth = authAccess.getAuthData(authToken);
         } catch (Exception e){
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
 
         if(auth == null){
@@ -102,7 +102,7 @@ public class GameService {
         try{
             return gameAccess.listGames();
         } catch (Exception e) {
-            throw new HttpException("Error: description", 500);
+            throw new HttpException(e.getMessage(), 500);
         }
     }
 }
