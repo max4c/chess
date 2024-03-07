@@ -1,15 +1,14 @@
 package server;
 
-import chess.ChessGame;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import dataAccess.DataAccessException;
+import dataAccess.Exception.DataAccessException;
 import dataAccess.GameDAO;
 import dataAccess.UserDAO;
 import dataAccess.AuthDAO;
-import dataAccess.MemoryGameDAO;
-import dataAccess.MemoryUserDAO;
-import dataAccess.MemoryAuthDAO;
+import dataAccess.MySqlGameDAO;
+import dataAccess.MySqlUserDAO;
+import dataAccess.MySqlAuthDAO;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -28,10 +27,10 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
 
-    public Server(){
-        this.gameAccess = new MemoryGameDAO();
-        this.authAccess = new MemoryAuthDAO();
-        this.userAccess = new MemoryUserDAO();
+    public Server() {
+        this.gameAccess = new MySqlGameDAO(); // replace to mySQL ones, make sure tables are constructed
+        this.authAccess = new MySqlAuthDAO();
+        this.userAccess = new MySqlUserDAO();
         this.clearService = new ClearService(gameAccess, userAccess, authAccess);
         this.userService = new UserService(userAccess,authAccess);
         this.gameService = new GameService(gameAccess,authAccess);
