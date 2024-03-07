@@ -1,5 +1,7 @@
 package dataAccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
 import dataAccess.Exception.DataAccessException;
 import model.GameData;
 
@@ -30,13 +32,22 @@ public class MySqlGameDAO implements GameDAO{
     }
 
     @Override
-    public void deleteAllGames() {
-
+    public void deleteAllGames() throws DataAccessException {
+        var statement = "TRUNCATE game";
+        DatabaseManager.executeUpdate(statement);
     }
 
     @Override
-    public int createGame(String gameName) {
-        return 0;
+    public int createGame(String gameName) throws DataAccessException{
+        var statement = "INSERT INTO game (gameName,ChessGame) VALUES (?, ?)";
+        ChessGame game = new ChessGame();
+        game.getBoard().resetBoard();
+        var json = new Gson().toJson(game);
+        try {
+            return DatabaseManager.executeUpdate(statement, gameName,json);
+        }catch (DataAccessException e){
+            throw new DataAccessException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+        }
     }
 
     @Override

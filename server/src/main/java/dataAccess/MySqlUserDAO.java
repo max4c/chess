@@ -28,8 +28,9 @@ public class MySqlUserDAO implements UserDAO{
     }
 
     @Override
-    public void deleteAllUsers() {
-        //Database.deleteTable()
+    public void deleteAllUsers() throws DataAccessException {
+        var statement = "TRUNCATE user";
+        DatabaseManager.executeUpdate(statement);
     }
 
     @Override

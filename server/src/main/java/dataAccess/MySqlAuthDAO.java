@@ -31,8 +31,9 @@ public class MySqlAuthDAO implements AuthDAO{
     }
 
     @Override
-    public void deleteAllAuths(){
-
+    public void deleteAllAuths() throws DataAccessException {
+        var statement = "TRUNCATE auth";
+        DatabaseManager.executeUpdate(statement);
     }
 
     @Override
@@ -66,8 +67,9 @@ public class MySqlAuthDAO implements AuthDAO{
     }
 
     @Override
-    public void deleteAuth(String authToken){
-        // delete from table with no where condition
+    public void deleteAuth(String authToken) throws DataAccessException {
+        var statement = "DELETE FROM auth WHERE authToken=?";
+        DatabaseManager.executeUpdate(statement, authToken);
     }
 
 

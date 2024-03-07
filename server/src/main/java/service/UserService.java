@@ -3,6 +3,7 @@ import dataAccess.UserDAO;
 import dataAccess.AuthDAO;
 import model.AuthData;
 import model.UserData;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Objects;
 
@@ -43,7 +44,9 @@ public class UserService {
             throw new HttpException(e.getMessage(), 500);
         }
 
-        if(user == null || !Objects.equals(user.password(), password)){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+        if(user == null || encoder.matches(user.password(), password)){
             throw new HttpException("Error: unauthorized",401);
         }
 
