@@ -34,7 +34,7 @@ public class MySqlUserDAO implements UserDAO{
 
     @Override
     public UserData getUser(String username) throws DataAccessException{
-        var statement = "SELECT username, json FROM user WHERE username=?";
+        var statement = "SELECT username, password, email FROM user WHERE username=?";
         try (var conn = DatabaseManager.getConnection()) {
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, username);
@@ -54,7 +54,7 @@ public class MySqlUserDAO implements UserDAO{
     public void createUser(String username, String password, String email) throws DataAccessException {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hashedPassword = encoder.encode(password);
-        var statement = "INSERT INTO user (name, password, email) VALUES (?, ?, ?)";
+        var statement = "INSERT INTO user (username, password, email) VALUES (?, ?, ?)";
         try {
             DatabaseManager.executeUpdate(statement, username, hashedPassword, email);
         }catch (DataAccessException e){

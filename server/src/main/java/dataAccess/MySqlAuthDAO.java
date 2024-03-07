@@ -49,7 +49,7 @@ public class MySqlAuthDAO implements AuthDAO{
 
     @Override
     public AuthData getAuthData(String authToken) throws DataAccessException{
-        var statement = "SELECT authToken, json FROM auth WHERE authToken=?";
+        var statement = "SELECT authToken, username FROM auth WHERE authToken=?";
         try (var conn = DatabaseManager.getConnection()) {
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, authToken);
