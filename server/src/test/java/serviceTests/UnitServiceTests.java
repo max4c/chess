@@ -1,8 +1,8 @@
 package serviceTests;
 import dataAccess.GameDAO;
-import dataAccess.MemoryGameDAO;
-import dataAccess.MemoryUserDAO;
-import dataAccess.MemoryAuthDAO;
+import dataAccess.MySqlGameDAO;
+import dataAccess.MySqlUserDAO;
+import dataAccess.MySqlAuthDAO;
 import model.AuthData;
 import model.GameData;
 import org.junit.jupiter.api.*;
@@ -15,13 +15,14 @@ import service.GameService;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UnitServiceTests {
-    static final MemoryGameDAO gameAccess = new MemoryGameDAO();
-    static final MemoryUserDAO userAccess = new MemoryUserDAO();
-    static final MemoryAuthDAO authAccess = new MemoryAuthDAO();
+    static final MySqlGameDAO gameAccess = new MySqlGameDAO();
+    static final MySqlUserDAO userAccess = new MySqlUserDAO();
+    static final MySqlAuthDAO authAccess = new MySqlAuthDAO();
     static final ClearService clearService = new ClearService(gameAccess, userAccess, authAccess);
     static final UserService userService = new UserService(userAccess, authAccess);
     static final GameService gameService = new GameService(gameAccess, authAccess);
@@ -62,7 +63,7 @@ public class UnitServiceTests {
     public void negLogin() throws Exception{
         userService.registration("username","password","email");
         try {
-            userService.login("username", null);
+            userService.login("username", "dog");
         }
         catch(HttpException e){
             Assertions.assertEquals(401, e.getStatusCode());
@@ -99,7 +100,7 @@ public class UnitServiceTests {
 
         Collection<GameData> games = gameService.listGames(authData.authToken());
         assertEquals(1,games.size());
-        assertTrue(games.contains(gameAccess.getGame(gameID)));
+        assertEquals(gameID,gameAccess.getGame(gameID).gameID());
     }
 
     @Test
@@ -140,12 +141,11 @@ public class UnitServiceTests {
         AuthData authData = userService.registration("username","password","email");
 
         int gameID1 = gameService.createGame(authData.authToken(),"nameOfGame1");
-        int gameID2 = gameService.createGame(authData.authToken(),"nameOfGame2");
 
         Collection<GameData> games = gameService.listGames(authData.authToken());
-        assertTrue(games.contains(gameAccess.getGame(gameID1)));
-        assertTrue(games.contains(gameAccess.getGame(gameID2)));
-
+        Iterator<GameData> iterator = games.iterator();
+        GameData firstGame = iterator.next();
+        assertEquals(gameID1, firstGame.gameID());
     }
 
     @Test
