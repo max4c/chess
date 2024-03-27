@@ -4,12 +4,13 @@ import server.ServerFacade;
 
 import java.util.Arrays;
 import static ui.EscapeSequences.*;
+import model.UserData;
 
-public class PreloginClient{
+public class PreloginUI {
     private final String serverUrl;
     private final ServerFacade server;
 
-    public PreloginClient(String serverUrl) {
+    public PreloginUI(String serverUrl) {
         server = new ServerFacade(serverUrl);
         this.serverUrl = serverUrl;
     }
@@ -24,16 +25,23 @@ public class PreloginClient{
                 case "quit" -> "quit";
                 default -> help();
             };
-        } catch (Exception ex) {
+        } catch (ResponseException ex) {
             return ex.getMessage();
         }
     }
 
-    public String register(String... params) throws Exception{
-        if(params.length >= 3){
-            return "time to create the server";
+    public String register(String... params) throws ResponseException{
+        if(params.length >= 3) {
+            try {
+                var username = params[0];
+                var password = params[1];
+                var email = params[2];
+                var user = new UserData(username,password,email);
+                server.register(user);
+                return String.format("You registered the user %s", user.username());
+            } catch (NumberFormatException ignored) {}
         }
-        throw new Exception();
+        throw new ResponseException(400, "Expected:  <USERNAME> <PASSWORD> <EMAIL>");
     }
 
     public String help() {

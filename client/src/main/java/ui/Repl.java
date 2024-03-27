@@ -4,10 +4,10 @@ import static ui.EscapeSequences.*;
 
 
 public class Repl {
-    private final PreloginClient preloginClient;
+    private final PreloginUI preloginUI;
 
     public Repl(String serverUrl) {
-        preloginClient = new PreloginClient(serverUrl);
+        preloginUI = new PreloginUI(serverUrl);
     }
 
     public void run() {
@@ -20,7 +20,7 @@ public class Repl {
             String line = scanner.nextLine();
 
             try {
-                result = preloginClient.eval(line);
+                result = preloginUI.eval(line);
                 System.out.print(SET_TEXT_COLOR_BLUE + result);
             } catch (Throwable e) {
                 var msg = e.toString();
