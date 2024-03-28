@@ -7,12 +7,10 @@ import static ui.EscapeSequences.*;
 import model.UserData;
 
 public class PreloginUI {
-    private final String serverUrl;
     private final ServerFacade server;
 
-    public PreloginUI(String serverUrl) {
-        server = new ServerFacade(serverUrl);
-        this.serverUrl = serverUrl;
+    public PreloginUI(ServerFacade server) {
+        this.server = server;
     }
 
     public String eval(String input) {
@@ -21,6 +19,7 @@ public class PreloginUI {
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
+                case "login" -> login(params);
                 case "register" -> register(params);
                 case "quit" -> "quit";
                 default -> help();
@@ -30,6 +29,22 @@ public class PreloginUI {
         }
     }
 
+    public String login(String... params) throws ResponseException {
+        if (params.length >= 2) {
+            try {
+                var username = params[0];
+                var password = params[1];
+                var user = new UserData(username, password, null);
+                var response = server.login(user);
+                DataCache.getInstance().setAuthToken(response.authToken());
+                return String.format("You logged in as %s", user.username());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        throw new ResponseException(400, "Expected:  <USERNAME> <PASSWORD>");
+    }
+
+
     public String register(String... params) throws ResponseException{
         if(params.length >= 3) {
             try {
@@ -37,8 +52,9 @@ public class PreloginUI {
                 var password = params[1];
                 var email = params[2];
                 var user = new UserData(username,password,email);
-                server.register(user);
-                return String.format("You registered the user %s", user.username());
+                var response = server.register(user);
+                DataCache.getInstance().setAuthToken(response.authToken());
+                return String.format("You logged in as %s \n", user.username());
             } catch (NumberFormatException ignored) {}
         }
         throw new ResponseException(400, "Expected:  <USERNAME> <PASSWORD> <EMAIL>");
