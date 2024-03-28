@@ -5,6 +5,8 @@ import model.GameData;
 import ui.ResponseException;
 import model.UserData;
 import model.AuthData;
+import model.GameResponse;
+import model.ListGamesResponse;
 
 import java.io.*;
 import java.net.*;
@@ -17,27 +19,57 @@ public class ServerFacade {
         serverUrl = url;
     }
 
-    public int createGame(GameData game)throws ResponseException{
+    /*
+    private class GameResponse {
+        private int gameID;
+
+        public void setGameID(int gameID) {
+            this.gameID = gameID;
+        }
+
+        public int getGameID() {
+            return gameID;
+        }
+    }
+    */
+
+
+    public int createGame(GameData game, String authToken)throws ResponseException{
         var path = "/game";
-        return this.makeRequest("POST",path,game, int.class);
+        GameResponse gameResponse = this.makeRequest("POST",path,authToken,game, GameResponse.class);
+        return gameResponse.gameID();
     }
 
     public AuthData register(UserData user)throws ResponseException{
         var path = "/user";
-        return this.makeRequest("POST",path,user, AuthData.class);
+        return this.makeRequest("POST",path,null,user, AuthData.class);
     }
 
     public AuthData login(UserData user)throws ResponseException{
         var path = "/session";
-        return this.makeRequest("POST",path,user, AuthData.class);
+        return this.makeRequest("POST",path,null,user, AuthData.class);
     }
 
-    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws ResponseException {
+    public ListGamesResponse listGames(String authToken)throws ResponseException{
+        var path = "/game";
+        return this.makeRequest("GET", path, authToken, null, ListGamesResponse.class);
+    }
+
+    public void logout(String authToken)throws ResponseException{
+        var path = "/session";
+        this.makeRequest("DELETE", path, authToken, null, null);
+    }
+
+    private <T> T makeRequest(String method, String path, String header, Object request, Class<T> responseClass) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
             http.setDoOutput(true);
+
+            if(header != null){
+                http.addRequestProperty("authorization", header);
+            }
 
             writeBody(request, http);
             http.connect();

@@ -36,6 +36,10 @@ public class Repl {
                 }
                 else{
                     result = postloginUI.eval(line);
+                    if(result.contains("logged out")){
+                        state = State.LOGGED_OUT;
+                        DataCache.getInstance().setAuthToken(null);
+                    }
                 }
                 System.out.print(SET_TEXT_COLOR_BLUE + result);
             } catch (Throwable e) {
