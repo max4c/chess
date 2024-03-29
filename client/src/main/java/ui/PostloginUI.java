@@ -80,7 +80,7 @@ public class PostloginUI {
             try {
                 String blackBoard = new RenderBoard().getBlackBoard();
                 String whiteBoard = new RenderBoard().getWhiteBoard();
-                return "lower case is black and upper case is white\n" + whiteBoard + "\n" + blackBoard;
+                return "lower case is white and upper case is black\n" + whiteBoard + "\n" + blackBoard;
             } catch (NumberFormatException ignored) {
             }
         }
@@ -96,7 +96,7 @@ public class PostloginUI {
                 server.joinGame(authToken,gameID,playerColor);
                 String blackBoard = new RenderBoard().getBlackBoard();
                 String whiteBoard = new RenderBoard().getWhiteBoard();
-                return "lower case is black and upper case is white\n" + whiteBoard + "\n" + blackBoard;
+                return "lower case is white and upper case is black\n" + whiteBoard + "\n" + blackBoard;
             } catch (NumberFormatException ignored) {
             }
         }
