@@ -20,20 +20,6 @@ public class ServerFacade {
         serverUrl = url;
     }
 
-    /*
-    private class GameResponse {
-        private int gameID;
-
-        public void setGameID(int gameID) {
-            this.gameID = gameID;
-        }
-
-        public int getGameID() {
-            return gameID;
-        }
-    }
-    */
-
 
     public int createGame(GameData game, String authToken)throws ResponseException{
         var path = "/game";
