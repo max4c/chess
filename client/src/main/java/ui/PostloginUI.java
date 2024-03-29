@@ -1,7 +1,6 @@
 package ui;
 
 import model.GameData;
-import model.ListGamesResponse;
 import server.ServerFacade;
 
 import java.util.Arrays;
@@ -25,6 +24,7 @@ public class PostloginUI {
                 case "create" -> createGame(params);
                 case "list" -> listGames();
                 case "join" -> joinGame(params);
+                case "observe" -> observeGame(params);
                 case "logout" -> logout();
                 case "quit" -> "quit";
                 default -> help();
@@ -75,19 +75,32 @@ public class PostloginUI {
         }
     }
 
+    public String observeGame(String... params) throws ResponseException {
+        if (params.length >= 1) {
+            try {
+                String blackBoard = new RenderBoard().getBlackBoard();
+                String whiteBoard = new RenderBoard().getWhiteBoard();
+                return "lower case is black and upper case is white\n" + whiteBoard + "\n" + blackBoard;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        throw new ResponseException(400, "Expected: observe <ID>");
+    }
+
     public String joinGame(String... params) throws ResponseException {
         if (params.length >= 2) {
             try {
                 String authToken = DataCache.getInstance().getAuthToken();
                 int gameID = Integer.parseInt(params[0]);
-                String playerColor = params[1];
-                var game = new GameData(gameID,null, null,null,null);
-                //int gameID = server.createGame(game, authToken);
-                return String.format("You created a game with the ID %s",gameID);
+                String playerColor = params[1].toUpperCase();
+                server.joinGame(authToken,gameID,playerColor);
+                String blackBoard = new RenderBoard().getBlackBoard();
+                String whiteBoard = new RenderBoard().getWhiteBoard();
+                return "lower case is black and upper case is white\n" + whiteBoard + "\n" + blackBoard;
             } catch (NumberFormatException ignored) {
             }
         }
-        throw new ResponseException(400, "Expected:  <USERNAME> <PASSWORD>");
+        throw new ResponseException(400, "Expected: join <ID> [WHITE|BLACK]");
     }
 
     public String createGame(String... params) throws ResponseException {
@@ -101,7 +114,7 @@ public class PostloginUI {
             } catch (NumberFormatException ignored) {
             }
         }
-        throw new ResponseException(400, "Expected:  <USERNAME> <PASSWORD>");
+        throw new ResponseException(400, "Expected: create <NAME>");
     }
 
     public String help() {
@@ -109,7 +122,7 @@ public class PostloginUI {
                 "- a game\n" + SET_TEXT_COLOR_BLUE +
                 "list " + SET_TEXT_COLOR_WHITE +
                 "- games\n" + SET_TEXT_COLOR_BLUE +
-                "join <ID> [WHITE | BLACK|<empty>] " + SET_TEXT_COLOR_WHITE +
+                "join <ID> [WHITE|BLACK] " + SET_TEXT_COLOR_WHITE +
                 "- a game\n" + SET_TEXT_COLOR_BLUE +
                 "observe <ID> " + SET_TEXT_COLOR_WHITE +
                 "- a game\n" + SET_TEXT_COLOR_BLUE +
@@ -120,4 +133,5 @@ public class PostloginUI {
                 "help " + SET_TEXT_COLOR_WHITE +
                 "- with possible commands\n";
     }
+
 }

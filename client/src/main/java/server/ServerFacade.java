@@ -10,6 +10,7 @@ import model.ListGamesResponse;
 
 import java.io.*;
 import java.net.*;
+import java.util.Map;
 
 public class ServerFacade {
 
@@ -58,6 +59,12 @@ public class ServerFacade {
     public void logout(String authToken)throws ResponseException{
         var path = "/session";
         this.makeRequest("DELETE", path, authToken, null, null);
+    }
+
+    public void joinGame(String authToken,int gameID, String playerColor)throws ResponseException{
+        var path = "/game";
+        Map<String, Object> request= Map.of("playerColor", playerColor, "gameID", gameID);
+        this.makeRequest("PUT", path, authToken, request, null);
     }
 
     private <T> T makeRequest(String method, String path, String header, Object request, Class<T> responseClass) throws ResponseException {
