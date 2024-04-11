@@ -5,9 +5,11 @@ import server.ServerFacade;
 import java.util.Arrays;
 import static ui.EscapeSequences.*;
 import model.UserData;
+import ui.websocket.WebSocketFacade;
 
 public class PreloginUI {
     private final ServerFacade server;
+
 
     public PreloginUI(ServerFacade server) {
         this.server = server;

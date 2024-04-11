@@ -1,7 +1,9 @@
 package ui;
 
+import chess.ChessGame;
 import model.GameData;
 import server.ServerFacade;
+import ui.websocket.WebSocketFacade;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,9 +12,11 @@ import static ui.EscapeSequences.*;
 
 public class PostloginUI {
     private final ServerFacade server;
+    private final WebSocketFacade websocket;
 
-    public PostloginUI(ServerFacade server) {
+    public PostloginUI(ServerFacade server, WebSocketFacade websocket) {
         this.server = server;
+        this.websocket = websocket;
     }
 
     public String eval(String input) {
@@ -94,6 +98,8 @@ public class PostloginUI {
                 int gameID = Integer.parseInt(params[0]);
                 String playerColor = params[1].toUpperCase();
                 server.joinGame(authToken,gameID,playerColor);
+                ChessGame.TeamColor playerColorConverted = ChessGame.TeamColor.valueOf(playerColor);
+                websocket.joinPlayer(gameID, playerColorConverted);
                 String blackBoard = new RenderBoard().getBlackBoard();
                 String whiteBoard = new RenderBoard().getWhiteBoard();
                 return "lower case is white and upper case is black\n" + whiteBoard + "\n" + blackBoard;
