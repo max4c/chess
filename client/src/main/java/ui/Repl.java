@@ -1,21 +1,27 @@
 package ui;
 import server.ServerFacade;
+import ui.websocket.*;
+import webSocketMessages.serverMessages.ServerMessage;
 
 import java.util.Scanner;
 import static ui.EscapeSequences.*;
 
 
-public class Repl {
+public class Repl implements NotificationHandler {
 
     private final ServerFacade server;
+    private final WebSocketFacade websocket;
     private final PreloginUI preloginUI;
     private final PostloginUI postloginUI;
+    private final GameplayUI gameplayUI;
     private State state = State.LOGGED_OUT;
 
-    public Repl(String serverUrl) {
+    public Repl(String serverUrl) throws ResponseException {
         server = new ServerFacade(serverUrl);
+        websocket = new WebSocketFacade(serverUrl, this);
         preloginUI = new PreloginUI(server);
-        postloginUI = new PostloginUI(server);
+        postloginUI = new PostloginUI(server, websocket);
+        gameplayUI = new GameplayUI(server);
     }
 
     public void run() {
@@ -28,7 +34,11 @@ public class Repl {
             String line = scanner.nextLine();
 
             try {
-                if(state == State.LOGGED_OUT){
+                if(state == State.IN_GAME){
+                    result = gameplayUI.eval(line);
+                }
+
+                else if(state == State.LOGGED_OUT){
                     result = preloginUI.eval(line);
                     if(result.contains("logged in ")){
                         state = State.LOGGED_IN;
@@ -39,6 +49,9 @@ public class Repl {
                     if(result.contains("logged out")){
                         state = State.LOGGED_OUT;
                         DataCache.getInstance().setAuthToken(null);
+                    }
+                    if(result.contains("lower case")){
+                        state = State.IN_GAME;
                     }
                 }
                 System.out.print(SET_TEXT_COLOR_BLUE + result);
@@ -52,7 +65,10 @@ public class Repl {
 
     private void printPrompt() {
         String state_text = "";
-        if (state == State.LOGGED_OUT){
+        if (state == State.IN_GAME){
+            state_text = "[IN_GAME]";
+        }
+        else if (state == State.LOGGED_OUT){
             state_text = "[LOGGED_OUT]";
         }
         else{
@@ -62,4 +78,9 @@ public class Repl {
         System.out.print("\n" + SET_TEXT_COLOR_WHITE + state_text + " >>> " + SET_TEXT_COLOR_GREEN );
     }
 
+    @Override
+    public void notify(ServerMessage notification) {
+        System.out.println(SET_TEXT_COLOR_RED + notification.getServerMessageType());
+        printPrompt();
+    }
 }
