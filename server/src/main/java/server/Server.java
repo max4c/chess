@@ -12,6 +12,7 @@ import dataAccess.MySqlAuthDAO;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+import server.websocket.WebSocketHandler;
 import service.*;
 import spark.*;
 
@@ -27,8 +28,11 @@ public class Server {
     private final UserService userService;
     private final GameService gameService;
 
+    private final WebSocketHandler webSocketHandler;
+
     public Server() {
-        this.gameAccess = new MySqlGameDAO(); // replace to mySQL ones, make sure tables are constructed
+        this.webSocketHandler = new WebSocketHandler();
+        this.gameAccess = new MySqlGameDAO();
         this.authAccess = new MySqlAuthDAO();
         this.userAccess = new MySqlUserDAO();
         this.clearService = new ClearService(gameAccess, userAccess, authAccess);
@@ -40,6 +44,8 @@ public class Server {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/connect", webSocketHandler);
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user",this::register);
