@@ -1,9 +1,11 @@
 package service;
 import chess.ChessGame;
+import dataAccess.Exception.DataAccessException;
 import dataAccess.GameDAO;
 import dataAccess.AuthDAO;
 import model.AuthData;
 import model.GameData;
+import model.UserData;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -22,7 +24,7 @@ public class GameService {
             throw new HttpException("Error: bad request",400);
         }
 
-        AuthData auth = null;
+        AuthData auth;
 
         try{
             auth = authAccess.getAuthData(authToken);
@@ -46,8 +48,8 @@ public class GameService {
             throw new HttpException("Error: bad request",400);
         }
 
-        AuthData auth = null;
-        GameData game = null;
+        AuthData auth;
+        GameData game;
 
         try{
             auth = authAccess.getAuthData(authToken);
@@ -88,7 +90,7 @@ public class GameService {
     }
 
     public Collection<GameData> listGames(String authToken) throws HttpException{
-        AuthData auth = null;
+        AuthData auth;
 
         try{
             auth = authAccess.getAuthData(authToken);
@@ -104,5 +106,17 @@ public class GameService {
         } catch (Exception e) {
             throw new HttpException(e.getMessage(), 500);
         }
+    }
+
+    public String joinPlayer(String authToken) throws HttpException {
+        AuthData authData;
+
+        try{
+            authData = authAccess.getAuthData(authToken);
+        } catch (Exception e){
+            throw new HttpException(e.getMessage(), 500);
+        }
+
+        return authData.username();
     }
 }
