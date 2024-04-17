@@ -5,17 +5,12 @@ import com.google.gson.Gson;
 import ui.DataCache;
 import ui.ResponseException;
 import webSocketMessages.serverMessages.Error;
-import webSocketMessages.serverMessages.LoadGame;
-import webSocketMessages.serverMessages.Notification;
-import webSocketMessages.serverMessages.ServerMessage;
-import webSocketMessages.userCommands.JoinObserver;
-import webSocketMessages.userCommands.JoinPlayer;
-import webSocketMessages.userCommands.Leave;
-import webSocketMessages.userCommands.UserGameCommand;
+
+import webSocketMessages.serverMessages.*;
+import webSocketMessages.userCommands.*;
 
 import javax.websocket.*;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -82,6 +77,15 @@ public class WebSocketFacade extends Endpoint {
     public void leave() throws ResponseException {
         try {
             var command = new Leave(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID());
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch (IOException ex) {
+            throw new ResponseException(500, ex.getMessage());
+        }
+    }
+
+    public void resign() throws ResponseException {
+        try {
+            var command = new Resign(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID());
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
