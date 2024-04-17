@@ -8,6 +8,7 @@ import webSocketMessages.serverMessages.Error;
 import webSocketMessages.serverMessages.LoadGame;
 import webSocketMessages.serverMessages.Notification;
 import webSocketMessages.serverMessages.ServerMessage;
+import webSocketMessages.userCommands.JoinObserver;
 import webSocketMessages.userCommands.JoinPlayer;
 import webSocketMessages.userCommands.Leave;
 import webSocketMessages.userCommands.UserGameCommand;
@@ -35,7 +36,6 @@ public class WebSocketFacade extends Endpoint {
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
                 public void onMessage(String message) {
-                    System.out.println(message);
                     ServerMessage msg = new Gson().fromJson(message, ServerMessage.class);
                     switch (msg.getServerMessageType()){
                         case LOAD_GAME:
@@ -64,6 +64,15 @@ public class WebSocketFacade extends Endpoint {
     public void joinPlayer(int gameID, ChessGame.TeamColor playerColor) throws ResponseException {
         try {
             var command = new JoinPlayer(DataCache.getInstance().getAuthToken(),gameID, playerColor);
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch (IOException ex) {
+            throw new ResponseException(500, ex.getMessage());
+        }
+    }
+
+    public void joinObserver() throws ResponseException {
+        try{
+            var command = new JoinObserver(DataCache.getInstance().getAuthToken(), DataCache.getInstance().getGameID());
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());

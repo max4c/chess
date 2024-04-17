@@ -82,6 +82,8 @@ public class PostloginUI {
     public String observeGame(String... params) throws ResponseException {
         if (params.length >= 1) {
             try {
+                DataCache.getInstance().setGameID(Integer.parseInt(params[0]));
+                websocket.joinObserver();
                 String blackBoard = new RenderBoard().getBlackBoard();
                 String whiteBoard = new RenderBoard().getWhiteBoard();
                 return "lower case is white and upper case is black\n" + whiteBoard + "\n" + blackBoard;
