@@ -12,6 +12,7 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.GameService;
 import service.HttpException;
 import webSocketMessages.serverMessages.LoadGame;
+import webSocketMessages.serverMessages.Notification;
 import webSocketMessages.serverMessages.ServerMessage;
 import webSocketMessages.userCommands.JoinPlayer;
 import webSocketMessages.userCommands.UserGameCommand;
@@ -43,12 +44,7 @@ public class WebSocketHandler {
             case MAKE_MOVE -> makeMove();
             case LEAVE -> leave();
             case RESIGN -> resign();
-            default -> command_error();
         }
-    }
-
-    private void command_error() {
-
     }
 
     private void resign() {
@@ -68,11 +64,14 @@ public class WebSocketHandler {
     private void joinPlayer(JoinPlayer command, Session session) throws HttpException{
         connections.add(command.getAuthString(), session, command.getGameID());
         String playerName = gameService.joinPlayer(command.getAuthString());
-        String game = String.format("%s joined the game",playerName);
-        var message = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
+        String game = "loaded game";
+        var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
+        String notification = String.format("%s joined the game as %s",playerName, command.getPlayerColor().toString());
+        var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
         // Do I need to get the game from the game database with the joinPlayer function?
         try {
-            broadcast(command.getAuthString(), message);
+           send(new Gson().toJson(rootMessage),session);
+           broadcast(command.getAuthString(), notifMessage, command.getGameID());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -82,17 +81,19 @@ public class WebSocketHandler {
         session.getRemote().sendString(message);
     }
 
-    public void broadcast(String exceptThisAuthToken, ServerMessage message) throws IOException {
-        for (Map.Entry<Integer, Map<String, Session>> entry : connections.getEntrySet()) {
+    public void broadcast(String exceptThisAuthToken, ServerMessage message, int rootGameID) throws IOException {
+        for (Map.Entry<Integer, Map<String, Session>> entry : connections.getEntrySet()) { // for each entry in connections
             Integer gameID = entry.getKey();
             Map<String, Session> sessionMap = entry.getValue();
 
-            for (Map.Entry<String, Session> sessionEntry : sessionMap.entrySet()) {
-                String authToken = sessionEntry.getKey();
-                Session session = sessionEntry.getValue();
+            if(gameID == rootGameID){
+                for (Map.Entry<String, Session> sessionEntry : sessionMap.entrySet()) { // for each session in each entry
+                    String authToken = sessionEntry.getKey();
+                    Session session = sessionEntry.getValue();
 
-                if (!authToken.equals(exceptThisAuthToken)) {
-                    send(message.toString(),session);
+                    if (!authToken.equals(exceptThisAuthToken)) {
+                        send(new Gson().toJson(message),session);
+                    }
                 }
             }
         }
