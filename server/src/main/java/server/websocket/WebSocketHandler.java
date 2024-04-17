@@ -11,14 +11,9 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.GameService;
 import service.HttpException;
+import webSocketMessages.serverMessages.*;
 import webSocketMessages.serverMessages.Error;
-import webSocketMessages.serverMessages.LoadGame;
-import webSocketMessages.serverMessages.Notification;
-import webSocketMessages.serverMessages.ServerMessage;
-import webSocketMessages.userCommands.JoinObserver;
-import webSocketMessages.userCommands.JoinPlayer;
-import webSocketMessages.userCommands.Leave;
-import webSocketMessages.userCommands.UserGameCommand;
+import webSocketMessages.userCommands.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,12 +42,29 @@ public class WebSocketHandler {
             case JOIN_OBSERVER -> joinObserver(new Gson().fromJson(message, JoinObserver.class), session); // call the new GSON with the class of the specific command
             case MAKE_MOVE -> makeMove();
             case LEAVE -> leave(new Gson().fromJson(message, Leave.class));
-            case RESIGN -> resign();
+            case RESIGN -> resign(new Gson().fromJson(message, Resign.class), session);
         }
     }
 
-    private void resign() {
+    private void resign(Resign command, Session session) throws HttpException {
+        AuthData authData;
+        try {
+            authData = authAccess.getAuthData(command.getAuthString());
+        }catch (Exception e) {
+            throw new HttpException(e.getMessage(), 500);
+        }
 
+        String playerName = authData.username();
+        String notification = String.format("%s resigned",playerName);
+        var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
+        try {
+            if(session.isOpen()){
+                send(new Gson().toJson(notifMessage),session);
+            }
+            broadcast(command.getAuthString(), notifMessage, command.getGameID());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void leave(Leave command) throws HttpException, DataAccessException {
@@ -89,42 +101,66 @@ public class WebSocketHandler {
     }
 
     private void joinObserver(JoinObserver command, Session session) throws HttpException {
-        connections.add(command.getAuthString(), session, command.getGameID());
 
         AuthData authData;
+        GameData gameData;
+        String errorMessage = "";
 
         try {
             authData = authAccess.getAuthData(command.getAuthString());
-        }catch (Exception e) {
+            gameData = gameAccess.getGame(command.getGameID());
+        } catch (Exception e) {
             throw new HttpException(e.getMessage(), 500);
         }
 
-        String game = "loaded game";
-        var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
-        String playerName = authData.username();
-        String notification = String.format("%s joined the game as an observer",playerName);
-        var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
-        try {
-            send(new Gson().toJson(rootMessage),session);
-            broadcast(command.getAuthString(), notifMessage, command.getGameID());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (authData == null || !Objects.equals(command.getAuthString(), authData.authToken())){
+            errorMessage = "error incorrect authToken";
+        }
+        else if(gameData == null || gameData.gameID() != command.getGameID()){
+            errorMessage = "error incorrect gameID";
+        }
+
+        if(errorMessage.isEmpty()){
+            connections.add(command.getAuthString(), session, command.getGameID());
+            String game = "loaded game";
+            var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
+            String playerName = authData.username();
+            String notification = String.format("%s joined the game as an observer",playerName);
+            var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
+            try {
+                if(session.isOpen()){
+                    send(new Gson().toJson(rootMessage),session);
+                }
+                broadcast(command.getAuthString(), notifMessage, command.getGameID());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else{
+            var error = new Error(ServerMessage.ServerMessageType.ERROR, errorMessage);
+            try {
+                send(new Gson().toJson(error),session);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }
 
     private void joinPlayer(JoinPlayer command, Session session) throws HttpException{
-        connections.add(command.getAuthString(), session, command.getGameID());
         String[] result = joinPlayerDatabaseCheck(command.getAuthString(), command.getGameID(), command.getPlayerColor().toString());
         String playerName = result[0];
         String errorMessage = result[1];
         if(errorMessage.isEmpty()){
+            connections.add(command.getAuthString(), session, command.getGameID());
             String game = "loaded game";
             var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
             String notification = String.format("%s joined the game as %s",playerName, command.getPlayerColor().toString());
             var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
             try {
-                send(new Gson().toJson(rootMessage),session);
+                if(session.isOpen()){
+                    send(new Gson().toJson(rootMessage),session);
+                }
                 broadcast(command.getAuthString(), notifMessage, command.getGameID());
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -155,8 +191,10 @@ public class WebSocketHandler {
                     String authToken = sessionEntry.getKey();
                     Session session = sessionEntry.getValue();
 
-                    if (!authToken.equals(exceptThisAuthToken)) {
-                        send(new Gson().toJson(message),session);
+                    if(sessionEntry.getValue().isOpen()) {
+                        if (!authToken.equals(exceptThisAuthToken)) {
+                            send(new Gson().toJson(message), session);
+                        }
                     }
                 }
             }

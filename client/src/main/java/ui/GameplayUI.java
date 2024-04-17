@@ -24,6 +24,7 @@ public class GameplayUI {
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
                 case "leave" -> leave();
+                case "resign" -> resign();
                 default -> help();
             };
         } catch (ResponseException ex) {
@@ -48,6 +49,11 @@ public class GameplayUI {
     public String leave() throws ResponseException{
         websocket.leave();
         return "You have left the game";
+    }
+
+    public String resign() throws ResponseException{
+        websocket.resign();
+        return "You have given up the game";
     }
 
 }
