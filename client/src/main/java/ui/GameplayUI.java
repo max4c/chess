@@ -1,6 +1,7 @@
 package ui;
 
 import server.ServerFacade;
+import ui.websocket.WebSocketFacade;
 
 import java.util.Arrays;
 
@@ -9,9 +10,11 @@ import static ui.EscapeSequences.*;
 public class GameplayUI {
 
     private final ServerFacade server;
+    private final WebSocketFacade websocket;
 
-    public GameplayUI(ServerFacade server) {
+    public GameplayUI(ServerFacade server, WebSocketFacade websocket) {
         this.server = server;
+        this.websocket = websocket;
     }
 
     public String eval(String input) {
@@ -20,6 +23,7 @@ public class GameplayUI {
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
+                case "leave" -> leave();
                 default -> help();
             };
         } catch (ResponseException ex) {
@@ -39,6 +43,11 @@ public class GameplayUI {
                 "- legal moves\n" + SET_TEXT_COLOR_BLUE +
                 "help " + SET_TEXT_COLOR_WHITE +
                 "- with possible commands\n";
+    }
+
+    public String leave() throws ResponseException{
+        websocket.leave();
+        return "You have left the game";
     }
 
 }

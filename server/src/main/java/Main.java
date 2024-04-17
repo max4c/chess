@@ -5,7 +5,7 @@ public class Main {
     public static void main(String[] args) {
         Server server = new Server();
 
-        server.run(8080);
+        server.run(8081);
 
     }
 }

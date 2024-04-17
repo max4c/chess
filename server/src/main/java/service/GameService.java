@@ -108,15 +108,5 @@ public class GameService {
         }
     }
 
-    public String joinPlayer(String authToken) throws HttpException {
-        AuthData authData;
 
-        try{
-            authData = authAccess.getAuthData(authToken);
-        } catch (Exception e){
-            throw new HttpException(e.getMessage(), 500);
-        }
-
-        return authData.username();
-    }
 }

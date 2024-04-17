@@ -15,8 +15,9 @@ public class ConnectionManager {
         sessionMap.put(authToken,session);
     }
 
-    public void remove(String playerName) {
-        connections.remove(playerName);
+    public void remove(int gameID,String authToken) {
+        Map<String, Session> map = connections.get(gameID);
+        map.remove(authToken);
     }
 
     public Set<Map.Entry<Integer, Map<String, Session>>> getEntrySet() {
