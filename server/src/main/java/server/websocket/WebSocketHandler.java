@@ -15,6 +15,7 @@ import webSocketMessages.serverMessages.Error;
 import webSocketMessages.serverMessages.LoadGame;
 import webSocketMessages.serverMessages.Notification;
 import webSocketMessages.serverMessages.ServerMessage;
+import webSocketMessages.userCommands.JoinObserver;
 import webSocketMessages.userCommands.JoinPlayer;
 import webSocketMessages.userCommands.Leave;
 import webSocketMessages.userCommands.UserGameCommand;
@@ -40,11 +41,10 @@ public class WebSocketHandler {
 
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws HttpException, DataAccessException {
-        System.out.println(message);
         UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
         switch (command.getCommandType()) {
             case JOIN_PLAYER -> joinPlayer(new Gson().fromJson(message, JoinPlayer.class), session);
-            case JOIN_OBSERVER -> joinObserver(); // call the new GSON with the class of the specific command
+            case JOIN_OBSERVER -> joinObserver(new Gson().fromJson(message, JoinObserver.class), session); // call the new GSON with the class of the specific command
             case MAKE_MOVE -> makeMove();
             case LEAVE -> leave(new Gson().fromJson(message, Leave.class));
             case RESIGN -> resign();
@@ -88,7 +88,29 @@ public class WebSocketHandler {
 
     }
 
-    private void joinObserver() {
+    private void joinObserver(JoinObserver command, Session session) throws HttpException {
+        connections.add(command.getAuthString(), session, command.getGameID());
+
+        AuthData authData;
+
+        try {
+            authData = authAccess.getAuthData(command.getAuthString());
+        }catch (Exception e) {
+            throw new HttpException(e.getMessage(), 500);
+        }
+
+        String game = "loaded game";
+        var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
+        String playerName = authData.username();
+        String notification = String.format("%s joined the game as an observer",playerName);
+        var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
+        try {
+            send(new Gson().toJson(rootMessage),session);
+            broadcast(command.getAuthString(), notifMessage, command.getGameID());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     private void joinPlayer(JoinPlayer command, Session session) throws HttpException{

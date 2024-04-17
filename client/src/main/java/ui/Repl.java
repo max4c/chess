@@ -9,16 +9,14 @@ import static ui.EscapeSequences.*;
 
 public class Repl implements NotificationHandler {
 
-    private final ServerFacade server;
-    private final WebSocketFacade websocket;
     private final PreloginUI preloginUI;
     private final PostloginUI postloginUI;
     private final GameplayUI gameplayUI;
     private State state = State.LOGGED_OUT;
 
     public Repl(String serverUrl) throws ResponseException {
-        server = new ServerFacade(serverUrl);
-        websocket = new WebSocketFacade(serverUrl, this);
+        ServerFacade server = new ServerFacade(serverUrl);
+        WebSocketFacade websocket = new WebSocketFacade(serverUrl, this);
         preloginUI = new PreloginUI(server);
         postloginUI = new PostloginUI(server, websocket);
         gameplayUI = new GameplayUI(server, websocket);
