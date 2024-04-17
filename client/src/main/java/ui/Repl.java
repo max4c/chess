@@ -21,7 +21,7 @@ public class Repl implements NotificationHandler {
         websocket = new WebSocketFacade(serverUrl, this);
         preloginUI = new PreloginUI(server);
         postloginUI = new PostloginUI(server, websocket);
-        gameplayUI = new GameplayUI(server);
+        gameplayUI = new GameplayUI(server, websocket);
     }
 
     public void run() {
@@ -36,6 +36,9 @@ public class Repl implements NotificationHandler {
             try {
                 if(state == State.IN_GAME){
                     result = gameplayUI.eval(line);
+                    if(result.contains("left the game")){
+                        state = State.LOGGED_IN;
+                    }
                 }
 
                 else if(state == State.LOGGED_OUT){

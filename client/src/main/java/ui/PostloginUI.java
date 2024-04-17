@@ -96,6 +96,7 @@ public class PostloginUI {
             try {
                 String authToken = DataCache.getInstance().getAuthToken();
                 int gameID = Integer.parseInt(params[0]);
+                DataCache.getInstance().setGameID(gameID);
                 String playerColor = params[1].toUpperCase();
                 server.joinGame(authToken,gameID,playerColor);
                 ChessGame.TeamColor playerColorConverted = ChessGame.TeamColor.valueOf(playerColor);

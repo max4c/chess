@@ -2,10 +2,20 @@ package ui;
 
 public class DataCache {
     private String authToken;
+    private int gameID;
 
     private static final DataCache instance = new DataCache();
+    // store the current game
 
     private DataCache() {
+    }
+
+    public int getGameID() {
+        return gameID;
+    }
+
+    public void setGameID(int gameID) {
+        this.gameID = gameID;
     }
 
     public void setAuthToken(String authToken) {
