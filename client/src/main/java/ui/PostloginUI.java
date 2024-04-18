@@ -84,9 +84,7 @@ public class PostloginUI {
             try {
                 DataCache.getInstance().setGameID(Integer.parseInt(params[0]));
                 websocket.joinObserver();
-                String blackBoard = new RenderBoard().getBlackBoard();
-                String whiteBoard = new RenderBoard().getWhiteBoard();
-                return "lower case is white and upper case is black\n" + whiteBoard + "\n" + blackBoard;
+                return "You joined the game as an observer";
             } catch (NumberFormatException ignored) {
             }
         }
@@ -102,7 +100,6 @@ public class PostloginUI {
                 String playerColor = params[1].toUpperCase();
                 server.joinGame(authToken,gameID,playerColor);
                 DataCache.getInstance().setPlayerColor(playerColor);
-
                 ChessGame.TeamColor playerColorConverted = ChessGame.TeamColor.valueOf(playerColor);
                 websocket.joinPlayer(gameID, playerColorConverted);
                 return "You joined the game";

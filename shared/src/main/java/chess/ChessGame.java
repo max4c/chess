@@ -14,10 +14,20 @@ public class ChessGame {
 
     private ChessBoard board;
     private TeamColor turn;
+    private boolean resigned;
+
+    public boolean isResigned() {
+        return resigned;
+    }
+
+    public void setResigned(boolean resigned) {
+        this.resigned = resigned;
+    }
 
     public ChessGame() {
         this.board = new ChessBoard();
         this.turn = TeamColor.WHITE;
+        this.resigned = false;
     }
 
     /**
