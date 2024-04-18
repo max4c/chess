@@ -64,18 +64,18 @@ public class Repl implements NotificationHandler {
     }
 
     private void printPrompt() {
-        String state_text = "";
+        String stateText = "";
         if (state == State.IN_GAME){
-            state_text = "[IN_GAME]";
+            stateText = "[IN_GAME]";
         }
         else if (state == State.LOGGED_OUT){
-            state_text = "[LOGGED_OUT]";
+            stateText = "[LOGGED_OUT]";
         }
         else{
-            state_text = "[LOGGED_IN]";
+            stateText = "[LOGGED_IN]";
         }
 
-        System.out.print("\n" + SET_TEXT_COLOR_WHITE + state_text + " >>> " + SET_TEXT_COLOR_GREEN );
+        System.out.print("\n" + SET_TEXT_COLOR_WHITE + stateText + " >>> " + SET_TEXT_COLOR_GREEN );
     }
 
     @Override

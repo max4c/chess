@@ -1,6 +1,5 @@
 package server.websocket;
 
-import chess.ChessBoard;
 import chess.ChessGame;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
@@ -11,14 +10,12 @@ import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import service.GameService;
 import service.HttpException;
 import webSocketMessages.serverMessages.*;
 import webSocketMessages.serverMessages.Error;
 import webSocketMessages.userCommands.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,12 +25,10 @@ public class WebSocketHandler {
     private final ConnectionManager connections = new ConnectionManager();
     private final GameDAO gameAccess;
     private final AuthDAO authAccess;
-    private final UserDAO userAccess;
 
     public WebSocketHandler() {
         this.gameAccess = new MySqlGameDAO();
         this.authAccess = new MySqlAuthDAO();
-        this.userAccess = new MemoryUserDAO();
     }
 
     @OnWebSocketMessage
@@ -48,24 +43,43 @@ public class WebSocketHandler {
         }
     }
 
-    private void resign(Resign command, Session session) throws HttpException {
+    private void resign(Resign command, Session session) throws HttpException, IOException, DataAccessException {
         AuthData authData;
+        GameData gameData;
+        String errorMessage = "";
+
         try {
             authData = authAccess.getAuthData(command.getAuthString());
+            gameData = gameAccess.getGame(command.getGameID());
         }catch (Exception e) {
             throw new HttpException(e.getMessage(), 500);
         }
+        ChessGame game = gameData.game();
 
-        String playerName = authData.username();
-        String notification = String.format("%s resigned",playerName);
-        var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
-        try {
-            if(session.isOpen()){
-                send(new Gson().toJson(notifMessage),session);
+        if (!Objects.equals(authData.username(), gameData.whiteUsername()) && !Objects.equals(authData.username(), gameData.blackUsername())){
+            errorMessage = "error observer can't make move";
+            handleError(errorMessage,session);
+        }
+        else if(game.isResigned()){
+            errorMessage = "error can't resign twice";
+            handleError(errorMessage,session);
+        }
+        else{
+            game.setResigned(true);
+            var gameJson = new Gson().toJson(game);
+            gameAccess.updateGame(command.getGameID(), "game", gameJson);
+            String playerName = authData.username();
+            String notification = String.format("%s resigned",playerName);
+            var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
+            try {
+                if(session.isOpen()){
+                    send(new Gson().toJson(notifMessage),session);
+                }
+                broadcast(command.getAuthString(), notifMessage, command.getGameID());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            broadcast(command.getAuthString(), notifMessage, command.getGameID());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+
         }
     }
 
@@ -102,6 +116,7 @@ public class WebSocketHandler {
         AuthData authData;
         GameData gameData;
         String errorMessage = "";
+        boolean isWhite;
 
         try {
             authData = authAccess.getAuthData(command.getAuthString());
@@ -111,17 +126,33 @@ public class WebSocketHandler {
         }
 
         ChessGame game = gameData.game();
+        isWhite = Objects.equals(authData.username(), gameData.whiteUsername());
 
-        try {
-            game.makeMove(command.getMove());
-            var gameJson = new Gson().toJson(game);
-            gameAccess.updateGame(command.getGameID(), "game", gameJson);
-        } catch (InvalidMoveException e){
-            errorMessage = "error invalid move";
-            var error = new Error(ServerMessage.ServerMessageType.ERROR, errorMessage);
-            send(new Gson().toJson(error),session);
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
+        if (!Objects.equals(authData.username(), gameData.whiteUsername()) && !Objects.equals(authData.username(), gameData.blackUsername())){
+            errorMessage = "error observer can't make move";
+        }
+        else if(Objects.equals(game.getBoard().getPiece(command.getMove().getStartPosition()).getTeamColor().toString(), "BLACK") && isWhite){
+            errorMessage = "error player can't move other player's pieces";
+        }
+        else if(Objects.equals(game.getBoard().getPiece(command.getMove().getStartPosition()).getTeamColor().toString(), "WHITE") && !isWhite){
+            errorMessage = "error player can't move other player's pieces";
+        }
+        else if(!Objects.equals(game.getTeamTurn().toString(), game.getBoard().getPiece(command.getMove().getStartPosition()).getTeamColor().toString())){
+            errorMessage = "error can't make move on other player's team";
+        }
+        else if(game.isResigned()){
+            errorMessage = "error can't make moves after resignation";
+        }
+        else{
+            try {
+                game.makeMove(command.getMove());
+                var gameJson = new Gson().toJson(game);
+                gameAccess.updateGame(command.getGameID(), "game", gameJson);
+            } catch (InvalidMoveException e){
+                errorMessage = "error invalid move";
+            } catch (DataAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         if(errorMessage.isEmpty()) {
@@ -138,11 +169,63 @@ public class WebSocketHandler {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        } else{
+            handleError(errorMessage,session);
         }
     }
 
-    private void joinObserver(JoinObserver command, Session session) throws HttpException, DataAccessException {
+    private void handleSession(Integer gameID, String authString, Session session, String notifyText) throws IOException, DataAccessException {
+        connections.add(authString, session, gameID);
+        ChessGame game = gameAccess.getGame(gameID).game();
+        var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
+        var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, notifyText);
 
+        try {
+            if(session.isOpen()){
+                send(new Gson().toJson(rootMessage), session);
+            }
+            broadcast(authString, notifMessage, gameID);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void handleError(String errorMessage, Session session) throws IOException {
+        var error = new Error(ServerMessage.ServerMessageType.ERROR, errorMessage);
+        try {
+            send(new Gson().toJson(error), session);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private void joinObserver(JoinObserver command, Session session) throws HttpException, DataAccessException, IOException {
+        String errorMessage = validateObserver(command);
+        String playerName = ""; // or implement logic to determine player name
+
+        if (errorMessage.isEmpty()) {
+            String notifyText = String.format("%s joined the game as an observer", playerName);
+            handleSession(command.getGameID(), command.getAuthString(), session, notifyText);
+        } else {
+            handleError(errorMessage, session);
+        }
+    }
+
+    private void joinPlayer(JoinPlayer command, Session session) throws HttpException, DataAccessException, IOException {
+        String[] result = joinPlayerDatabaseCheck(command.getAuthString(), command.getGameID(), command.getPlayerColor().toString());
+        String playerName = result[0];
+        String errorMessage = result[1];
+
+        if (errorMessage.isEmpty()) {
+            String notifyText = String.format("%s joined the game as %s", playerName, command.getPlayerColor().toString());
+            handleSession(command.getGameID(), command.getAuthString(), session, notifyText);
+        } else {
+            handleError(errorMessage, session);
+        }
+    }
+
+    private String validateObserver(JoinObserver command) throws HttpException, DataAccessException {
         AuthData authData;
         GameData gameData;
         String errorMessage = "";
@@ -154,69 +237,14 @@ public class WebSocketHandler {
             throw new HttpException(e.getMessage(), 500);
         }
 
-        if (authData == null || !Objects.equals(command.getAuthString(), authData.authToken())){
+        if (authData == null || !Objects.equals(command.getAuthString(), authData.authToken())) {
             errorMessage = "error incorrect authToken";
-        }
-        else if(gameData == null || gameData.gameID() != command.getGameID()){
+        } else if(gameData == null || gameData.gameID() != command.getGameID()) {
             errorMessage = "error incorrect gameID";
         }
-
-        if(errorMessage.isEmpty()){
-            connections.add(command.getAuthString(), session, command.getGameID());
-            ChessGame game = gameAccess.getGame(command.getGameID()).game();
-            var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
-            String playerName = authData.username();
-            String notification = String.format("%s joined the game as an observer",playerName);
-            var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
-            try {
-                if(session.isOpen()){
-                    send(new Gson().toJson(rootMessage),session);
-                }
-                broadcast(command.getAuthString(), notifMessage, command.getGameID());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else{
-            var error = new Error(ServerMessage.ServerMessageType.ERROR, errorMessage);
-            try {
-                send(new Gson().toJson(error),session);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
+        return errorMessage;
     }
 
-    private void joinPlayer(JoinPlayer command, Session session) throws HttpException, DataAccessException {
-        String[] result = joinPlayerDatabaseCheck(command.getAuthString(), command.getGameID(), command.getPlayerColor().toString());
-        String playerName = result[0];
-        String errorMessage = result[1];
-        if(errorMessage.isEmpty()){
-            connections.add(command.getAuthString(), session, command.getGameID());
-            ChessGame game = gameAccess.getGame(command.getGameID()).game();
-            var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
-            String notification = String.format("%s joined the game as %s",playerName, command.getPlayerColor().toString());
-            var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
-            try {
-                if(session.isOpen()){
-                    send(new Gson().toJson(rootMessage),session);
-                }
-                broadcast(command.getAuthString(), notifMessage, command.getGameID());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else{
-            var error = new Error(ServerMessage.ServerMessageType.ERROR, errorMessage);
-            try {
-                send(new Gson().toJson(error),session);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-    }
 
     public void send(String message,Session session) throws IOException {
         session.getRemote().sendString(message);

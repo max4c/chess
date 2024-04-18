@@ -5,7 +5,6 @@ import chess.ChessMove;
 import com.google.gson.Gson;
 import ui.DataCache;
 import ui.DrawBoard;
-import ui.RenderBoard;
 import ui.ResponseException;
 import webSocketMessages.serverMessages.Error;
 
@@ -13,7 +12,6 @@ import webSocketMessages.serverMessages.*;
 import webSocketMessages.userCommands.*;
 
 import javax.websocket.*;
-import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,50 +59,39 @@ public class WebSocketFacade extends Endpoint {
     public void onOpen(Session session, EndpointConfig endpointConfig) {}
 
 
-    public void joinPlayer(int gameID, ChessGame.TeamColor playerColor) throws ResponseException {
+    public void sendCommand(UserGameCommand command) throws ResponseException {
         try {
-            var command = new JoinPlayer(DataCache.getInstance().getAuthToken(),gameID, playerColor);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
         }
+    }
+
+    public void joinPlayer(int gameID, ChessGame.TeamColor playerColor) throws ResponseException {
+        var command = new JoinPlayer(DataCache.getInstance().getAuthToken(),gameID, playerColor);
+        sendCommand(command);
     }
 
     public void joinObserver() throws ResponseException {
-        try{
-            var command = new JoinObserver(DataCache.getInstance().getAuthToken(), DataCache.getInstance().getGameID());
-            this.session.getBasicRemote().sendText(new Gson().toJson(command));
-        } catch (IOException ex) {
-            throw new ResponseException(500, ex.getMessage());
-        }
+        var command = new JoinObserver(DataCache.getInstance().getAuthToken(), DataCache.getInstance().getGameID());
+        sendCommand(command);
     }
 
     public void leave() throws ResponseException {
-        try {
-            var command = new Leave(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID());
-            this.session.getBasicRemote().sendText(new Gson().toJson(command));
-        } catch (IOException ex) {
-            throw new ResponseException(500, ex.getMessage());
-        }
+        var command = new Leave(DataCache.getInstance().getAuthToken(), DataCache.getInstance().getGameID());
+        sendCommand(command);
     }
 
     public void resign() throws ResponseException {
-        try {
-            var command = new Resign(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID());
-            this.session.getBasicRemote().sendText(new Gson().toJson(command));
-        } catch (IOException ex) {
-            throw new ResponseException(500, ex.getMessage());
-        }
+        var command = new Resign(DataCache.getInstance().getAuthToken(), DataCache.getInstance().getGameID());
+        sendCommand(command);
     }
 
     public void makeMove(ChessMove move) throws ResponseException {
-        try {
-            var command = new MakeMove(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID(), move);
-            this.session.getBasicRemote().sendText(new Gson().toJson(command));
-        } catch (IOException ex) {
-            throw new ResponseException(500, ex.getMessage());
-        }
+        var command = new MakeMove(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID(), move);
+        sendCommand(command);
     }
+
 
 
 
