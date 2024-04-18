@@ -80,6 +80,8 @@ public class MySqlGameDAO implements GameDAO{
             columnToUpdate = "whiteUsername";
         } else if ("blackUsername".equals(fieldToUpdate)) {
             columnToUpdate = "blackUsername";
+        } else if ("game".equals(fieldToUpdate)) {
+            columnToUpdate = "ChessGame";
         }
 
         // If the input matches an acceptable value, go ahead with the update:

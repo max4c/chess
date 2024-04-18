@@ -101,11 +101,11 @@ public class PostloginUI {
                 DataCache.getInstance().setGameID(gameID);
                 String playerColor = params[1].toUpperCase();
                 server.joinGame(authToken,gameID,playerColor);
+                DataCache.getInstance().setPlayerColor(playerColor);
+
                 ChessGame.TeamColor playerColorConverted = ChessGame.TeamColor.valueOf(playerColor);
                 websocket.joinPlayer(gameID, playerColorConverted);
-                String blackBoard = new RenderBoard().getBlackBoard();
-                String whiteBoard = new RenderBoard().getWhiteBoard();
-                return "lower case is white and upper case is black\n" + whiteBoard + "\n" + blackBoard;
+                return "You joined the game";
             } catch (NumberFormatException ignored) {
             }
         }

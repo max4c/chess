@@ -1,8 +1,11 @@
 package ui.websocket;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import com.google.gson.Gson;
 import ui.DataCache;
+import ui.DrawBoard;
+import ui.RenderBoard;
 import ui.ResponseException;
 import webSocketMessages.serverMessages.Error;
 
@@ -10,6 +13,7 @@ import webSocketMessages.serverMessages.*;
 import webSocketMessages.userCommands.*;
 
 import javax.websocket.*;
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,7 +38,8 @@ public class WebSocketFacade extends Endpoint {
                     ServerMessage msg = new Gson().fromJson(message, ServerMessage.class);
                     switch (msg.getServerMessageType()){
                         case LOAD_GAME:
-                            System.out.println("Call redraw board");
+                            DataCache.getInstance().setGame(new Gson().fromJson(message, LoadGame.class).getGame());
+                            new DrawBoard();
                             break;
                         case ERROR:
                             Error error = new Gson().fromJson(message, Error.class);
@@ -86,6 +91,15 @@ public class WebSocketFacade extends Endpoint {
     public void resign() throws ResponseException {
         try {
             var command = new Resign(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID());
+            this.session.getBasicRemote().sendText(new Gson().toJson(command));
+        } catch (IOException ex) {
+            throw new ResponseException(500, ex.getMessage());
+        }
+    }
+
+    public void makeMove(ChessMove move) throws ResponseException {
+        try {
+            var command = new MakeMove(DataCache.getInstance().getAuthToken(),DataCache.getInstance().getGameID(), move);
             this.session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException ex) {
             throw new ResponseException(500, ex.getMessage());
