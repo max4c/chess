@@ -1,7 +1,6 @@
 package ui;
 import server.ServerFacade;
 import ui.websocket.*;
-import webSocketMessages.serverMessages.ServerMessage;
 
 import java.util.Scanner;
 import static ui.EscapeSequences.*;
@@ -19,7 +18,7 @@ public class Repl implements NotificationHandler {
         WebSocketFacade websocket = new WebSocketFacade(serverUrl, this);
         preloginUI = new PreloginUI(server);
         postloginUI = new PostloginUI(server, websocket);
-        gameplayUI = new GameplayUI(server, websocket);
+        gameplayUI = new GameplayUI(websocket);
     }
 
     public void run() {
@@ -51,7 +50,7 @@ public class Repl implements NotificationHandler {
                         state = State.LOGGED_OUT;
                         DataCache.getInstance().setAuthToken(null);
                     }
-                    if(result.contains("lower case")){
+                    if(result.contains("joined the game")){
                         state = State.IN_GAME;
                     }
                 }

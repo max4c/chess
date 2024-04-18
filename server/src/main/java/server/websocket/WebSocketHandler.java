@@ -1,6 +1,8 @@
 package server.websocket;
 
+import chess.ChessBoard;
 import chess.ChessGame;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataAccess.*;
 import dataAccess.Exception.DataAccessException;
@@ -35,12 +37,12 @@ public class WebSocketHandler {
     }
 
     @OnWebSocketMessage
-    public void onMessage(Session session, String message) throws HttpException, DataAccessException {
+    public void onMessage(Session session, String message) throws HttpException, DataAccessException, IOException {
         UserGameCommand command = new Gson().fromJson(message, UserGameCommand.class);
         switch (command.getCommandType()) {
             case JOIN_PLAYER -> joinPlayer(new Gson().fromJson(message, JoinPlayer.class), session);
             case JOIN_OBSERVER -> joinObserver(new Gson().fromJson(message, JoinObserver.class), session); // call the new GSON with the class of the specific command
-            case MAKE_MOVE -> makeMove();
+            case MAKE_MOVE -> makeMove(new Gson().fromJson(message, MakeMove.class), session);
             case LEAVE -> leave(new Gson().fromJson(message, Leave.class));
             case RESIGN -> resign(new Gson().fromJson(message, Resign.class), session);
         }
@@ -96,11 +98,50 @@ public class WebSocketHandler {
 
     }
 
-    private void makeMove() {
+    private void makeMove(MakeMove command, Session session) throws HttpException, IOException {
+        AuthData authData;
+        GameData gameData;
+        String errorMessage = "";
 
+        try {
+            authData = authAccess.getAuthData(command.getAuthString());
+            gameData = gameAccess.getGame(command.getGameID());
+        } catch (Exception e) {
+            throw new HttpException(e.getMessage(), 500);
+        }
+
+        ChessGame game = gameData.game();
+
+        try {
+            game.makeMove(command.getMove());
+            var gameJson = new Gson().toJson(game);
+            gameAccess.updateGame(command.getGameID(), "game", gameJson);
+        } catch (InvalidMoveException e){
+            errorMessage = "error invalid move";
+            var error = new Error(ServerMessage.ServerMessageType.ERROR, errorMessage);
+            send(new Gson().toJson(error),session);
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+        if(errorMessage.isEmpty()) {
+            var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME, game);
+            String playerName = authData.username();
+            String notification = String.format("%s made a move", playerName);
+            var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION, notification);
+            try {
+                if (session.isOpen()) {
+                    send(new Gson().toJson(rootMessage), session);
+                }
+                broadcast(command.getAuthString(), rootMessage, command.getGameID());
+                broadcast(command.getAuthString(), notifMessage, command.getGameID());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
-    private void joinObserver(JoinObserver command, Session session) throws HttpException {
+    private void joinObserver(JoinObserver command, Session session) throws HttpException, DataAccessException {
 
         AuthData authData;
         GameData gameData;
@@ -122,7 +163,7 @@ public class WebSocketHandler {
 
         if(errorMessage.isEmpty()){
             connections.add(command.getAuthString(), session, command.getGameID());
-            String game = "loaded game";
+            ChessGame game = gameAccess.getGame(command.getGameID()).game();
             var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
             String playerName = authData.username();
             String notification = String.format("%s joined the game as an observer",playerName);
@@ -147,13 +188,13 @@ public class WebSocketHandler {
 
     }
 
-    private void joinPlayer(JoinPlayer command, Session session) throws HttpException{
+    private void joinPlayer(JoinPlayer command, Session session) throws HttpException, DataAccessException {
         String[] result = joinPlayerDatabaseCheck(command.getAuthString(), command.getGameID(), command.getPlayerColor().toString());
         String playerName = result[0];
         String errorMessage = result[1];
         if(errorMessage.isEmpty()){
             connections.add(command.getAuthString(), session, command.getGameID());
-            String game = "loaded game";
+            ChessGame game = gameAccess.getGame(command.getGameID()).game();
             var rootMessage = new LoadGame(ServerMessage.ServerMessageType.LOAD_GAME,game);
             String notification = String.format("%s joined the game as %s",playerName, command.getPlayerColor().toString());
             var notifMessage = new Notification(ServerMessage.ServerMessageType.NOTIFICATION,notification);
